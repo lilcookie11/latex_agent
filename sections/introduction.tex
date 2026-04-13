@@ -1,0 +1,69 @@
+% !TeX root = ../main.tex
+\section{Introduction}
+
+% 中文：多模态模型能够融合来自不同传感器或信息源的互补信息，因此在感知与理解任务中展现出显著优势。
+% 然而，在真实部署环境中，测试分布往往会随时间持续变化，这也使得持续测试时适配成为必要；而端侧系统又同时受到算力、存储和时延约束。
+% 在这种场景下，适配过程通常只能依赖轻量、在线、甚至仅支持前向传播的更新方式。
+% 因此，本文关注一个更苛刻但更贴近实际部署的设定：在端侧、资源受限、仅支持前向传播、且以单样本流式方式持续接收测试输入的条件下，
+% 如何实现稳定而有效的多模态持续测试时适配。
+Multimodal models improve perception and understanding by integrating complementary information from different sensors and information sources \citep{baltrusaitis2019multimodal}. In real deployments, however, the test distribution is rarely stationary and often evolves continuously over time, which has motivated continual test-time adaptation under non-stationary target streams \citep{wang2022continualtta}. This challenge becomes more pronounced in edge-side systems, where adaptation must also satisfy strict constraints on computation, memory, and latency. Under such constraints, adaptation is often limited to lightweight online updates and, in many cases, to forward-only update rules \citep{niu2024forwardonly}. In this work, we therefore study a more stringent yet practically relevant setting: edge-side multimodal continual test-time adaptation under resource-constrained, forward-only, and single-sample streaming deployment.
+
+% 中文：现有测试时适配方法已经在缓解分布偏移方面取得了显著进展。
+% 单模态持续测试时适配首先为不断变化目标分布下的在线熵最小化、样本过滤和鲁棒更新建立了基本范式。
+% 以 Tent、EATA 和 SAR 为代表的方法进一步表明，这些策略即使在无源标签条件下也能够有效提升模型对目标分布的适应能力。
+% 在此基础上，近期多模态方法大致形成了两类代表性策略：一类延续轻量全局更新范式，通过对归一化层或少量参数进行在线调整来适应目标分布；
+% 另一类则遵循“先诊断、再修正”的思路，在 branch 表征形成之后，于 late-stage representation 或 fusion stage 识别 shifted、biased 或 unreliable modalities，
+% 再通过模态选择、非对称更新、可靠性建模或监督修正来缓解其影响。SuMi、READ、TSA 和 DASP 分别代表了这些方向。
+% 然而，在我们关注的端侧前向式流式设定下，即便采用这些策略，模型仍常常不会以平滑、可控的方式逐步适应目标分布，而是更容易出现持续震荡、错误累积甚至类别坍塌等失稳现象。
+% 这表明，现有方法要么缺乏对 branch-side shift absorption 的显式约束，要么在 branch 表征已经失真之后才于后层进行补救；
+% 而在该设定下，真正更关键的可能不是后层补救本身，而是先稳定 branch-side adaptation，再让 fusion supervision 保持保守可靠。
+Single-modal continual test-time adaptation first established the basic paradigm of online entropy minimization, sample filtering, and robust updating under evolving target distributions. Representative methods such as Tent, EATA, and SAR \citep{wang2021tent,niu2022eata,niu2023sar} further show that these strategies can remain effective even without source labels. Building on these advances, recent multimodal methods can be broadly grouped into two representative strategies. One line continues the lightweight global-update paradigm by adapting normalization layers or a small set of parameters online to track the target distribution. The other follows a diagnose-and-correct direction: after branch representations have been formed, it identifies shifted, biased, or unreliable modalities at late-stage representations or at the fusion stage, and then repairs the adaptation process through modality selection, asymmetric updates, reliability-aware fusion, or supervision correction. SuMi, READ, TSA, and DASP \citep{guo2025smoothing,yang2024read,chen2025tsa,he2026dasp} exemplify these directions. However, under the edge-side forward-only streaming setting considered here, even these strategies often fail to adapt in a smooth and controllable manner. Instead, models tend to exhibit persistent oscillation, error accumulation, and even class-collapse behavior over time. This suggests that existing methods either lack explicit control over branch-side shift absorption or intervene only after branch representations have already become distorted. In contrast, under our setting, the more fundamental need is to first stabilize branch-side adaptation and then keep fusion-side supervision conservative and reliable.
+
+% 中文：我们认为，上述失稳现象主要源于两个尚未被同时解决的相互关联挑战。
+% \textbf{(1) 优化不稳定。} 在单样本流式更新和仅支持前向传播的条件下，在线适配缺乏稳定的局部统计支撑，使 branch 侧更新容易受到瞬时噪声和模态偏移干扰。
+% 同时，现有策略要么依赖缺乏分支级约束的轻量全局更新，要么将修正推迟到 late-stage representation 或 fusion stage，
+% 因而仍难以为 branch-side adaptation 建立稳定、可持续的更新轨迹，使分支表征难以持续吸收 shift。
+% \textbf{(2) 监督不稳定。} 在无标签流式适配中，融合预测天然承担着样本估值与更新依据的作用；然而，当 branch 表征尚未被稳定对齐时，fusion 输出会进一步受到类别频率偏置和错误高置信预测的影响，使不可靠样本持续进入更新过程。
+% 更关键的是，这两个挑战并非彼此独立：不稳定的 branch 更新会劣化 fusion 侧监督，而失真的 fusion 监督又会反过来带偏后续更新，
+% 最终形成一个自我强化的适配失稳闭环。
+We argue that this instability is mainly caused by two coupled challenges that remain unresolved in the current setting. \textbf{(1) Optimization instability.} Under single-sample streaming adaptation with forward-only updates, the model lacks stable local statistics to support reliable online optimization, making branch-side updates highly sensitive to instantaneous noise and modality-specific shift. At the same time, existing strategies either rely on lightweight global updates without explicit branch-level control or defer correction to late-stage representations and fusion modules. As a result, they still struggle to establish a stable and sustainable branch-side update trajectory, and branch representations fail to absorb distribution shift consistently. \textbf{(2) Supervision instability.} In unlabeled streaming adaptation, fusion predictions naturally serve as the basis for sample valuation and online supervision. However, once branch representations are not yet stably aligned, fusion outputs become increasingly affected by class-frequency bias and erroneous high-confidence predictions, allowing unreliable samples to keep entering the update process. More importantly, these two challenges reinforce each other: unstable branch updates degrade fusion supervision, while distorted fusion supervision in turn misleads subsequent updates, eventually creating a self-reinforcing instability loop.
+
+% 中文：为缓解上述挑战，我们提出一种正式命名为 Branch-First Conservative Adaptation（BFCA）的新框架。
+% 它围绕前文提出的两个挑战展开，并采用一种“先稳定、再校准”的整体范式。
+% \textbf{通过分支阶段的稳定优化。} 为应对优化不稳定，我们在 branch 阶段引入选择性稳定分支适配
+% （Selective Stable Branch Adaptation, SSBA）。在这一阶段，我们不直接在完整参数空间中执行激进的在线更新，
+% 而是仅在 carefully selected branch layers 上进行受限适配，并结合轻量参数更新、源域层统计约束和历史域记忆，
+% 从而在前向式流式条件下更稳定地吸收模态偏移。
+% \textbf{通过 fusion 侧的保守监督校准。} 为应对监督不稳定，我们在 fusion 阶段引入偏置校准的保守监督
+% （Bias-Calibrated Conservative Supervision, BCCS）。在这一阶段，我们不再直接信任当前融合预测，
+% 而是结合流式窗口中的类别频率偏置与预测置信度，对样本进行保守估值，并据此决定监督信号应被加权、抑制还是丢弃，
+% 以减少不可靠监督对后续更新的持续牵引。
+% 因而，BFCA 通过 SSBA 处理 branch 侧的优化不稳定，并通过 BCCS 处理 fusion 侧的监督不稳定，
+% 二者协同切断流式适配中的失稳闭环。
+To address these challenges, we propose a novel framework named
+\textbf{B}ranch-\textbf{F}irst \textbf{C}onservative \textbf{A}daptation \textbf{(BFCA)}.
+Our approach follows a \emph{stabilize-then-calibrate} framework.
+(1).\textbf{Stabilizing branch-side optimization.}
+To address optimization instability, we introduce Selective Stable Branch Adaptation (SSBA) at the branch stage.
+Instead of executing aggressive online updates in the full parameter space, SSBA adapts only carefully selected branch layers and combines lightweight parameter updates with source-layer statistical constraints and historical domain memory.
+This design enables the model to absorb modality-specific shift while maintaining a more stable update trajectory under single-sample forward-only streaming adaptation.
+(2).\textbf{Calibrating conservative fusion-side supervision.}
+To address supervision instability, we then introduce Bias-Calibrated Conservative Supervision (BCCS) at the fusion stage.
+Rather than directly trusting the current fusion prediction, BCCS jointly considers class-frequency bias within a streaming window and prediction confidence to conservatively value each sample, and accordingly decides whether its supervision signal should be weighted, suppressed, or discarded.
+In this way, BFCA uses SSBA to stabilize branch-side optimization and BCCS to regulate fusion-side supervision, allowing the two components to jointly break the instability loop in streaming adaptation. Our contributions are summarized as follows:
+
+% 中文：本文的贡献可以概括为四点。
+% 第一，我们首次在端侧、资源受限、仅支持前向传播且以单样本流式方式运行的多模态持续测试时适配场景中，
+% 将分支侧稳定优化与 fusion 侧监督校准统一到同一框架下，并提出 Branch-First Conservative Adaptation（BFCA）。
+% 第二，我们指出并刻画了该设定下的优化不稳定现象：现有方法要么依赖缺乏分支级约束的轻量全局更新，要么在后层才进行修正，
+% 因而难以为 branch-side adaptation 建立稳定、可持续的更新轨迹；针对这一问题，我们设计了 SSBA 来稳定 branch-side shift absorption。
+% 第三，我们指出并刻画了该设定下的监督不稳定现象：当 branch 表征尚未稳定对齐时，fusion 输出会受到类别频率偏置和错误高置信预测的影响，
+% 使不可靠样本持续进入更新过程；针对这一问题，我们设计了 BCCS 来执行保守的 fusion-side supervision calibration。
+% 第四，我们在 Kinetics50-C 和 VGGSound-C 上进行了系统实验，覆盖 interleaved 与 co-shift 等流式 corruption 设定，
+% 结果表明 BFCA 在适配稳定性与整体性能方面均优于强基线。
+\begin{itemize}
+    \item We are the first to unify branch-side stable optimization and fusion-side supervision calibration for edge-side multimodal continual test-time adaptation under resource-constrained, forward-only, and single-sample streaming deployment, and we formulate this setting through BFCA
+    \item We identify and characterize optimization instability in this setting: existing methods either rely on lightweight global updates without explicit branch-level control or intervene only at late-stage representations, making it difficult to establish a stable and sustainable branch-side adaptation trajectory. To address this issue, we design SSBA for stable branch-side shift absorption.
+    \item We identify and characterize supervision instability in this setting: once branch representations are not yet stably aligned, fusion outputs become increasingly affected by class-frequency bias and erroneous high-confidence predictions, causing unreliable samples to dominate subsequent updates. To address this issue, we design BCCS for conservative fusion-side supervision calibration.
+    \item We conduct comprehensive experiments on Kinetics50-C and VGGSound-C under multiple streaming corruption settings, including interleaved and co-shift scenarios, and show that BFCA consistently improves both adaptation stability and overall performance over strong baselines.
+\end{itemize}
