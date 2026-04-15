@@ -1,69 +1,72 @@
 % !TeX root = ../main.tex
 \section{Introduction}
 
-% 中文：多模态模型能够融合来自不同传感器或信息源的互补信息，因此在感知与理解任务中展现出显著优势。
-% 然而，在真实部署环境中，测试分布往往会随时间持续变化，这也使得持续测试时适配成为必要；而端侧系统又同时受到算力、存储和时延约束。
-% 在这种场景下，适配过程通常只能依赖轻量、在线、甚至仅支持前向传播的更新方式。
-% 因此，本文关注一个更苛刻但更贴近实际部署的设定：在端侧、资源受限、仅支持前向传播、且以单样本流式方式持续接收测试输入的条件下，
-% 如何实现稳定而有效的多模态持续测试时适配。
-Multimodal models improve perception and understanding by integrating complementary information from different sensors and information sources \citep{baltrusaitis2019multimodal}. In real deployments, however, the test distribution is rarely stationary and often evolves continuously over time, which has motivated continual test-time adaptation under non-stationary target streams \citep{wang2022continualtta}. This challenge becomes more pronounced in edge-side systems, where adaptation must also satisfy strict constraints on computation, memory, and latency. Under such constraints, adaptation is often limited to lightweight online updates and, in many cases, to forward-only update rules \citep{niu2024forwardonly}. In this work, we therefore study a more stringent yet practically relevant setting: edge-side multimodal continual test-time adaptation under resource-constrained, forward-only, and single-sample streaming deployment.
+% 中文：多模态持续测试时适配旨在通过在推理阶段利用无标签目标域测试流进行在线适配，提升多模态模型在持续变化分布偏移下的泛化能力。
+% 该任务对于真实部署尤为重要，因为测试样本通常是顺序到达的，且目标分布会动态变化。
+% 现有大多数 TTA 和 CTTA 方法依赖反向传播，通过熵最小化或自监督等辅助目标在线更新模型参数。
+% 尽管这些方法有效，基于反向传播的适配需要保存中间激活并执行梯度计算，从而带来显著的计算、显存和时延开销；
+% 在资源受限的端侧部署中，尤其是对于全精度或压缩不足的模型，这类开销会限制其实用性。
+% 因此，本文研究一个更严格但更贴近实际部署的设定：在资源受限、仅支持前向传播、单样本流式输入的端侧环境中，实现稳定而有效的多模态持续测试时适配。
+Multimodal continual test-time adaptation(CTTA) aims to improve model generalization under continuously evolving distribution shifts by adapting multimodal models to unlabeled target-domain streams during inference. This is critical for real-world deployment, where test samples arrive sequentially and target distributions often change dynamically. Most existing CTTA methods rely on backpropagation (BP) to update model parameters through auxiliary objectives such as entropy minimization or self-supervision. While effective, BP-based adaptation incurs substantial computational, memory, and latency overhead due to activation storage and gradient computation, which limits its practicality in resource-constrained edge-side deployment, especially for full-precision or insufficiently compressed models. Therefore, this work studies a more stringent yet practically relevant setting: stable and effective multimodal continual test-time adaptation under resource-constrained, forward-only, single-sample streaming edge deployment.
 
-% 中文：现有测试时适配方法已经在缓解分布偏移方面取得了显著进展。
-% 单模态持续测试时适配首先为不断变化目标分布下的在线熵最小化、样本过滤和鲁棒更新建立了基本范式。
-% 以 Tent、EATA 和 SAR 为代表的方法进一步表明，这些策略即使在无源标签条件下也能够有效提升模型对目标分布的适应能力。
-% 在此基础上，近期多模态方法大致形成了两类代表性策略：一类延续轻量全局更新范式，通过对归一化层或少量参数进行在线调整来适应目标分布；
-% 另一类则遵循“先诊断、再修正”的思路，在 branch 表征形成之后，于 late-stage representation 或 fusion stage 识别 shifted、biased 或 unreliable modalities，
-% 再通过模态选择、非对称更新、可靠性建模或监督修正来缓解其影响。SuMi、READ、TSA 和 DASP 分别代表了这些方向。
-% 然而，在我们关注的端侧前向式流式设定下，即便采用这些策略，模型仍常常不会以平滑、可控的方式逐步适应目标分布，而是更容易出现持续震荡、错误累积甚至类别坍塌等失稳现象。
-% 这表明，现有方法要么缺乏对 branch-side shift absorption 的显式约束，要么在 branch 表征已经失真之后才于后层进行补救；
-% 而在该设定下，真正更关键的可能不是后层补救本身，而是先稳定 branch-side adaptation，再让 fusion supervision 保持保守可靠。
-Single-modal continual test-time adaptation first established the basic paradigm of online entropy minimization, sample filtering, and robust updating under evolving target distributions. Representative methods such as Tent, EATA, and SAR \citep{wang2021tent,niu2022eata,niu2023sar} further show that these strategies can remain effective even without source labels. Building on these advances, recent multimodal methods can be broadly grouped into two representative strategies. One line continues the lightweight global-update paradigm by adapting normalization layers or a small set of parameters online to track the target distribution. The other follows a diagnose-and-correct direction: after branch representations have been formed, it identifies shifted, biased, or unreliable modalities at late-stage representations or at the fusion stage, and then repairs the adaptation process through modality selection, asymmetric updates, reliability-aware fusion, or supervision correction. SuMi, READ, TSA, and DASP \citep{guo2025smoothing,yang2024read,chen2025tsa,he2026dasp} exemplify these directions. However, under the edge-side forward-only streaming setting considered here, even these strategies often fail to adapt in a smooth and controllable manner. Instead, models tend to exhibit persistent oscillation, error accumulation, and even class-collapse behavior over time. This suggests that existing methods either lack explicit control over branch-side shift absorption or intervene only after branch representations have already become distorted. In contrast, under our setting, the more fundamental need is to first stabilize branch-side adaptation and then keep fusion-side supervision conservative and reliable.
+% 中文：现有多模态 TTA 研究主要关注如何诊断发生偏移、偏置或不可靠的模态，并通过模态可靠性建模、模态选择、非对称适配或监督修正来缓解跨模态分布偏移。
+% 然而，这些方法通常仍依赖反向传播来更新模型参数，难以直接适用于资源受限的端侧部署，尤其是在低算力、低存储或包含量化组件的设备上。
+% 为绕开反向传播带来的计算和显存开销，已有 BP-free TTA 方法开始探索仅依赖轻量统计或前向计算的在线适配策略。
+% 例如，BN-Adapt 通过调整 BatchNorm 统计量实现快速适配，T3A 通过更新分类器原型进行测试时调整，FOA 则利用进化搜索优化 Vision Transformer 中的轻量 prompt。
+% 总体而言，现有 BP-free TTA 方法仍难以直接扩展到端侧多模态 CTTA，主要受限于两点：
+% \textbf{1）架构泛化性不足。} BN-Adapt 依赖带有 BatchNorm 的 CNN，FOA 依赖 ViT prompt 结构，二者都难以自然覆盖异质的模态分支与融合模块。
+% \textbf{2）优化容量有限。} 现有方法主要更新统计量、分类器原型或 prompt 等低维组件，难以有效吸收复杂 branch 表征内部的模态偏移。
+Existing multimodal TTA studies mainly focus on diagnosing shifted, biased, or unreliable modalities, and mitigate cross-modal distribution shifts through modality reliability modeling, modality selection, asymmetric adaptation, or supervision correction. However, these methods typically still rely on BP to update model parameters, making them difficult to deploy directly in resource-constrained edge-side environments. To bypass the computational and memory overhead of backpropagation, existing BP-free TTA methods have explored online adaptation using only lightweight statistics or forward computations. BN-Adapt performs rapid adaptation by adjusting BatchNorm statistics, T3A updates classifier prototypes at test time, and FOA optimizes lightweight prompts for Vision Transformers (ViTs) via evolutionary search. Overall, existing BP-free TTA methods remain difficult to directly extend to edge-side multimodal CTTA, due to two fundamental limitations: \textbf{1) Poor architectural generality.} BN-Adapt relies on CNNs with BatchNorm, while FOA depends on ViT prompt structures; neither naturally covers heterogeneous modality branches and fusion modules. \textbf{2) Limited optimization capacity.} Existing methods mainly update low-dimensional statistics, classifier prototypes, or prompts, making them insufficient for absorbing modality-specific shifts inside complex branch representations.
 
-% 中文：我们认为，上述失稳现象主要源于两个尚未被同时解决的相互关联挑战。
-% \textbf{(1) 优化不稳定。} 在单样本流式更新和仅支持前向传播的条件下，在线适配缺乏稳定的局部统计支撑，使 branch 侧更新容易受到瞬时噪声和模态偏移干扰。
-% 同时，现有策略要么依赖缺乏分支级约束的轻量全局更新，要么将修正推迟到 late-stage representation 或 fusion stage，
-% 因而仍难以为 branch-side adaptation 建立稳定、可持续的更新轨迹，使分支表征难以持续吸收 shift。
-% \textbf{(2) 监督不稳定。} 在无标签流式适配中，融合预测天然承担着样本估值与更新依据的作用；然而，当 branch 表征尚未被稳定对齐时，fusion 输出会进一步受到类别频率偏置和错误高置信预测的影响，使不可靠样本持续进入更新过程。
-% 更关键的是，这两个挑战并非彼此独立：不稳定的 branch 更新会劣化 fusion 侧监督，而失真的 fusion 监督又会反过来带偏后续更新，
-% 最终形成一个自我强化的适配失稳闭环。
-We argue that this instability is mainly caused by two coupled challenges that remain unresolved in the current setting. \textbf{(1) Optimization instability.} Under single-sample streaming adaptation with forward-only updates, the model lacks stable local statistics to support reliable online optimization, making branch-side updates highly sensitive to instantaneous noise and modality-specific shift. At the same time, existing strategies either rely on lightweight global updates without explicit branch-level control or defer correction to late-stage representations and fusion modules. As a result, they still struggle to establish a stable and sustainable branch-side update trajectory, and branch representations fail to absorb distribution shift consistently. \textbf{(2) Supervision instability.} In unlabeled streaming adaptation, fusion predictions naturally serve as the basis for sample valuation and online supervision. However, once branch representations are not yet stably aligned, fusion outputs become increasingly affected by class-frequency bias and erroneous high-confidence predictions, allowing unreliable samples to keep entering the update process. More importantly, these two challenges reinforce each other: unstable branch updates degrade fusion supervision, while distorted fusion supervision in turn misleads subsequent updates, eventually creating a self-reinforcing instability loop.
+% 中文：零阶优化（ZOO）为绕开上述限制提供了一条自然路径。
+% 作为一种具有理论基础的 BP-free 学习机制，ZOO 通过前向扰动估计更新方向，无需反向计算，因此更适合资源受限的端侧部署；
+% 同时，它不依赖特定的模型结构，因而具有更强的适用性。
+% 然而，在端侧单样本流式环境中，直接将 ZOO 应用于在线无监督多模态 TTA 在实践中效果仍然不好。
+% 我们的诊断分析表明，这主要源于两个关键挑战：
+% \textbf{1）样本空间与参数空间的双重不可靠。} 在单样本流式设置下，ZOO 的更新方向容易受到不可靠样本干扰，从而将模型牵引到错误方向；
+% 同时，多模态模型高维且异质的参数空间会使 ZOO 收敛缓慢、效率低下，并难以准确作用于真正需要吸收偏移的关键参数。
+% \textbf{2）不稳定的优化目标。} 在 ZOO 通过前向扰动估计更新方向的情形下，熵损失随样本和分布变化产生的剧烈波动会直接转化为高方差的方向估计，从而导致在线更新不稳定。
+Zeroth-order optimization (ZOO) offers a natural path toward bypassing the above limitations. As a theoretically grounded BP-free learning mechanism, ZOO estimates update directions through forward-pass perturbations and requires no backward computation, making it more suitable for resource-constrained edge-side deployment. Meanwhile, it does not rely on specific model structures, and thus provides stronger architectural applicability. However, under edge-side single-sample streaming deployment, directly applying ZOO to online unsupervised multimodal TTA remains inferior in practice. Our diagnostic analysis reveals two key challenges: \textbf{1) Dual unreliability in sample and parameter spaces.} In single-sample streaming adaptation, ZOO update directions are easily disturbed by unreliable samples, which can drive the model toward incorrect adaptation trajectories. Meanwhile, the high-dimensional and heterogeneous parameter space of multimodal models makes ZOO slow to converge and inefficient to search, preventing it from accurately targeting the key parameters that truly need shift absorption. \textbf{2) Unstable optimization objective.} When ZOO estimates update directions through forward perturbations, heavy fluctuations in entropy loss caused by sample and distribution changes are directly translated into high-variance direction estimates, resulting in unstable online updates.
 
-% 中文：为缓解上述挑战，我们提出一种正式命名为 Branch-First Conservative Adaptation（BFCA）的新框架。
-% 它围绕前文提出的两个挑战展开，并采用一种“先稳定、再校准”的整体范式。
-% \textbf{通过分支阶段的稳定优化。} 为应对优化不稳定，我们在 branch 阶段引入选择性稳定分支适配
-% （Selective Stable Branch Adaptation, SSBA）。在这一阶段，我们不直接在完整参数空间中执行激进的在线更新，
-% 而是仅在 carefully selected branch layers 上进行受限适配，并结合轻量参数更新、源域层统计约束和历史域记忆，
-% 从而在前向式流式条件下更稳定地吸收模态偏移。
-% \textbf{通过 fusion 侧的保守监督校准。} 为应对监督不稳定，我们在 fusion 阶段引入偏置校准的保守监督
-% （Bias-Calibrated Conservative Supervision, BCCS）。在这一阶段，我们不再直接信任当前融合预测，
-% 而是结合流式窗口中的类别频率偏置与预测置信度，对样本进行保守估值，并据此决定监督信号应被加权、抑制还是丢弃，
-% 以减少不可靠监督对后续更新的持续牵引。
-% 因而，BFCA 通过 SSBA 处理 branch 侧的优化不稳定，并通过 BCCS 处理 fusion 侧的监督不稳定，
-% 二者协同切断流式适配中的失稳闭环。
-To address these challenges, we propose a novel framework named
-\textbf{B}ranch-\textbf{F}irst \textbf{C}onservative \textbf{A}daptation \textbf{(BFCA)}.
-Our approach follows a \emph{stabilize-then-calibrate} framework.
-(1).\textbf{Stabilizing branch-side optimization.}
-To address optimization instability, we introduce Selective Stable Branch Adaptation (SSBA) at the branch stage.
-Instead of executing aggressive online updates in the full parameter space, SSBA adapts only carefully selected branch layers and combines lightweight parameter updates with source-layer statistical constraints and historical domain memory.
-This design enables the model to absorb modality-specific shift while maintaining a more stable update trajectory under single-sample forward-only streaming adaptation.
-(2).\textbf{Calibrating conservative fusion-side supervision.}
-To address supervision instability, we then introduce Bias-Calibrated Conservative Supervision (BCCS) at the fusion stage.
-Rather than directly trusting the current fusion prediction, BCCS jointly considers class-frequency bias within a streaming window and prediction confidence to conservatively value each sample, and accordingly decides whether its supervision signal should be weighted, suppressed, or discarded.
-In this way, BFCA uses SSBA to stabilize branch-side optimization and BCCS to regulate fusion-side supervision, allowing the two components to jointly break the instability loop in streaming adaptation. Our contributions are summarized as follows:
+% 中文：为应对上述挑战，我们提出 \textbf{B}ranch-\textbf{F}irst \textbf{C}onservative \textbf{A}daptation \textbf{(BFCA)}，
+% 一种面向端侧多模态持续测试时适配的稳定前向式框架。
+% BFCA 并不直接将 ZOO 应用于所有测试样本和全部模型参数，而是通过两个互补机制同时稳定 ZOO 的搜索空间与优化目标。
+% \textbf{1）可靠样本与层选择。} 针对样本空间与参数空间的双重不可靠，
+% BFCA 引入 Reliable Sample and Layer Selection（RSLS）。
+% RSLS 一方面通过可靠样本筛选减少噪声样本对 ZOO 方向估计的干扰，另一方面将 ZOO 的搜索限制在更可能吸收模态偏移的关键 branch 层上，
+% 避免在完整高维参数空间中进行低效搜索，从而提高前向式优化的效率与稳定性。
+% \textbf{2）源锚定目标平滑。} 针对熵驱动目标在单样本流式条件下的剧烈波动，
+% BFCA 引入 Source-Anchored Objective Smoothing（SAOS）来稳定 ZOO 的前向扰动反馈。
+% SAOS 以源域特征统计作为稳定锚点，并通过轻量流式队列聚合目标域 branch 特征统计，为优化目标提供更平滑的表示层约束。
+% 由此，ZOO 的方向能在源域统计一致性的约束下保持更稳定的更新趋势，并自然适配异质多模态架构。
+% RSLS 与 SAOS 形成协同机制：RSLS 从样本和参数层面缩小并净化 ZOO 的搜索空间，SAOS 从目标函数层面平滑 ZOO 的扰动反馈。
+% 二者共同使前向式更新能够在资源受限、单样本流式、多模态分布持续变化的端侧场景中保持稳定而有效的在线无监督适配。
+To address these challenges, we propose
+\textbf{B}ranch-\textbf{F}irst \textbf{C}onservative \textbf{A}daptation \textbf{(BFCA)},
+a stable forward-only framework for edge-side multimodal continual test-time adaptation.
+BFCA does not naively apply ZOO to all test samples and all model parameters; instead, it stabilizes ZOO from two complementary aspects: the search space and the optimization objective.
+(1) \textbf{Reliable Sample and Layer Selection (RSLS).}
+To handle the dual unreliability in sample and parameter spaces, RSLS reduces the interference of noisy samples through reliable sample screening, while constraining ZOO to selected branch layers that are more likely to absorb modality-specific shifts.
+This avoids inefficient search over the full high-dimensional parameter space and improves the efficiency and stability of forward-only optimization.
+(2) \textbf{Source-Anchored Objective Smoothing (SAOS).}
+To address the severe fluctuation of entropy-driven objectives under single-sample streaming adaptation, SAOS stabilizes the forward-perturbation feedback of ZOO.
+It uses source-domain feature statistics as stable anchors and aggregates target-domain branch feature statistics with a lightweight streaming queue, providing a smoother representation-level constraint for the optimization objective.
+As a result, ZOO directions can maintain a more stable update trend under source-statistical consistency and naturally generalize to heterogeneous multimodal architectures.
+RSLS and SAOS operate synergistically: RSLS narrows and cleans the ZOO search space at the sample and parameter-layer levels, while SAOS smooths the perturbation feedback at the objective level.
+Together, they enable stable and effective online unsupervised adaptation under resource-constrained, single-sample streaming, and continuously shifting multimodal edge deployment. Our contributions are summarized as follows:
 
-% 中文：本文的贡献可以概括为四点。
-% 第一，我们首次在端侧、资源受限、仅支持前向传播且以单样本流式方式运行的多模态持续测试时适配场景中，
-% 将分支侧稳定优化与 fusion 侧监督校准统一到同一框架下，并提出 Branch-First Conservative Adaptation（BFCA）。
-% 第二，我们指出并刻画了该设定下的优化不稳定现象：现有方法要么依赖缺乏分支级约束的轻量全局更新，要么在后层才进行修正，
-% 因而难以为 branch-side adaptation 建立稳定、可持续的更新轨迹；针对这一问题，我们设计了 SSBA 来稳定 branch-side shift absorption。
-% 第三，我们指出并刻画了该设定下的监督不稳定现象：当 branch 表征尚未稳定对齐时，fusion 输出会受到类别频率偏置和错误高置信预测的影响，
-% 使不可靠样本持续进入更新过程；针对这一问题，我们设计了 BCCS 来执行保守的 fusion-side supervision calibration。
-% 第四，我们在 Kinetics50-C 和 VGGSound-C 上进行了系统实验，覆盖 interleaved 与 co-shift 等流式 corruption 设定，
-% 结果表明 BFCA 在适配稳定性与整体性能方面均优于强基线。
+% 中文：本文的贡献可以概括为三点。
+% 第一，我们首次提出 BFCA，一种面向端侧多模态持续测试时适配的无反向传播框架。
+% BFCA 建立在零阶优化之上，仅依赖前向传播即可在单样本流式测试过程中进行在线适配，
+% 并能够自然支持包含异质模态分支与融合模块的多模态架构。
+% 第二，我们提供诊断分析，识别出 ZOO 在多模态 CTTA 中的两个核心挑战：
+% 样本与参数空间双重不可靠导致的低效搜索，以及噪声熵目标带来的不稳定方向估计。
+% 为此，我们提出 RSLS 和 SAOS，分别用于降低搜索噪声与优化维度，并为 ZOO 提供稳定、低方差的前向式学习信号。
+% 第三，我们基于 CAV-MAE backbone，在 Kinetics50-C 和 VGGSound-C 多模态 corruption benchmark 上进行系统实验，
+% 并进一步在量化 backbone 上验证 BFCA 的端侧部署效果。
+% 实验结果表明，BFCA 在保持无反向传播和低资源开销的同时，显著提升了多模态 CTTA 的适配稳定性和整体性能。
 \begin{itemize}
-    \item We are the first to unify branch-side stable optimization and fusion-side supervision calibration for edge-side multimodal continual test-time adaptation under resource-constrained, forward-only, and single-sample streaming deployment, and we formulate this setting through BFCA
-    \item We identify and characterize optimization instability in this setting: existing methods either rely on lightweight global updates without explicit branch-level control or intervene only at late-stage representations, making it difficult to establish a stable and sustainable branch-side adaptation trajectory. To address this issue, we design SSBA for stable branch-side shift absorption.
-    \item We identify and characterize supervision instability in this setting: once branch representations are not yet stably aligned, fusion outputs become increasingly affected by class-frequency bias and erroneous high-confidence predictions, causing unreliable samples to dominate subsequent updates. To address this issue, we design BCCS for conservative fusion-side supervision calibration.
-    \item We conduct comprehensive experiments on Kinetics50-C and VGGSound-C under multiple streaming corruption settings, including interleaved and co-shift scenarios, and show that BFCA consistently improves both adaptation stability and overall performance over strong baselines.
+    \item We are the first to propose BFCA, a backpropagation-free framework for edge-side multimodal continual test-time adaptation. Built on zeroth-order optimization, BFCA performs online adaptation using only forward passes under single-sample streaming deployment, and naturally supports multimodal architectures with heterogeneous modality branches and fusion modules.
+    \item We provide a diagnostic analysis identifying two core challenges of applying ZOO to multimodal CTTA: inefficient search caused by dual unreliability in sample and parameter spaces, and unstable direction estimation caused by noisy entropy-driven objectives. To address them, we introduce RSLS and SAOS, which reduce search noise and optimization dimensionality while providing stable, low-variance forward-only learning signals for ZOO.
+    \item We conduct comprehensive experiments with CAV-MAE on Kinetics50-C and VGGSound-C multimodal corruption benchmarks, and further evaluate BFCA on quantized backbones to validate its edge-side deployment value. Results show that BFCA significantly improves adaptation stability and overall performance while preserving backpropagation-free and low-resource adaptation.
 \end{itemize}
