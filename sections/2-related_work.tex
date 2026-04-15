@@ -1,12 +1,35 @@
 % !TeX root = ../main.tex
 \section{Related Work}
 
-% Summarize the most relevant prior work and position the new method against it.
+% 中文：现有多模态 TTA/CTTA 方法主要关注测试分布变化下的跨模态可靠性问题。
+% 它们通过模态可靠性估计、偏移诊断、可信样本筛选、非对称适配或监督修正来缓解不可靠模态对融合预测的影响。
+% 这些方法与本文同样关注多模态分布偏移，但通常仍依赖反向传播更新模型参数，
+% 因而难以直接满足资源受限端侧设备上的 forward-only 适配需求。
+\paragraph{Multimodal Test-Time Adaptation.}
+Multimodal test-time adaptation aims to mitigate performance degradation caused by target-domain shifts in multimodal models.
+Compared with single-modal TTA and CTTA methods that mainly rely on entropy minimization, sample filtering, or robust online updating \citep{wang2021tent,niu2022eata,niu2023sar,wang2022continualtta}, multimodal TTA must additionally handle changing modality reliability under modality-specific corruptions.
+Recent methods therefore diagnose shifted or unreliable modalities and mitigate their influence through reliability modeling, modality selection, asymmetric adaptation, or supervision correction \citep{guo2025smoothing,yang2024read,chen2025tsa,he2026dasp}.
+Despite their effectiveness, these methods typically still update model parameters through backpropagation, requiring activation storage and gradient computation.
+This makes them difficult to deploy directly in resource-constrained, forward-only, single-sample streaming edge scenarios.
+Different from these BP-based multimodal adaptation methods, this work studies how to achieve stable multimodal CTTA without backpropagation.
 
+% 中文：BP-free TTA 方法通过避免梯度计算降低显存和计算开销。
+% 代表性方法包括 BatchNorm 统计更新、分类器原型或输出分布调整，以及基于前向搜索的 prompt 优化。
+% 这些方法提高了资源受限场景下的可部署性，但适配能力通常集中在统计量、原型、输出或 prompt 等低维组件上，
+% 难以充分吸收多模态 branch 表征内部的持续偏移。
+\paragraph{Backpropagation-Free Test-Time Adaptation.}
+To reduce the memory and computational costs of backpropagation, BP-free TTA methods perform adaptation with lightweight statistics or forward computations.
+Prediction-time BatchNorm adaptation updates normalization statistics using target data \citep{nado2020predictiontime}, T3A adjusts classifier prototypes at test time \citep{iwasawa2021t3a}, LAME corrects model outputs without updating parameters \citep{boudiaf2022lame}, and FOA optimizes lightweight prompts through derivative-free search \citep{niu2024forwardonly}.
+These methods improve deployability in resource-constrained settings, but their adaptation capacity is usually concentrated on low-dimensional components such as statistics, prototypes, outputs, or prompts.
+As a result, they are more suitable for lightweight output correction or limited parameter adjustment, and are less able to absorb persistent shifts inside modality-specific branch representations.
+For multimodal CTTA, where shifts can propagate through different modality branches and alter the inputs to fusion modules, a more flexible forward-only update mechanism is needed.
 
-\subsection{Multimodal Test-Time Adaption}
-
-
-\subsection{Continual Test-Time Adaption}
-
-\subsection{Zeroth-Order Optimization}
+% 中文：ZOO 通过前向扰动和有限差分估计更新方向，为 forward-only TTA 提供了更通用的学习机制。
+% 但现有 ZOO-based TTA 主要面向单模态设置，直接扩展到多模态 CTTA 时仍会受到不可靠样本、高维 branch 参数搜索和熵目标波动的影响。
+% 本文通过 RSLS 稳定搜索空间，并通过 SAOS 平滑优化目标，使 ZOO 能够用于端侧多模态 CTTA。
+\paragraph{Zeroth-Order Optimization for Forward-Only Adaptation.}
+Zeroth-order optimization estimates update directions with forward perturbations and finite-difference feedback, eliminating the need for backpropagation and offering favorable memory efficiency and architectural generality.
+Recent forward-only TTA work shows that such derivative-free learning can support online unsupervised adaptation \citep{niu2024forwardonly}.
+However, existing ZOO-based TTA is mainly studied in single-modal settings.
+Directly extending it to multimodal CTTA is non-trivial because unreliable samples can corrupt perturbation feedback, high-dimensional branch parameters make search inefficient, and fluctuating entropy objectives can induce high-variance direction estimates.
+This work extends ZOO to edge-side multimodal CTTA by using RSLS to stabilize the search space and SAOS to smooth the optimization objective.
