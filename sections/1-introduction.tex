@@ -62,7 +62,7 @@ Since ZOO directly uses perturbed entropy differences to estimate directions, su
 To address the above challenges, we propose
 \textbf{Z}eroth-\textbf{O}rder \textbf{S}election and \textbf{A}lignment \textbf{(ZOSA)}.
 It performs zeroth-order updates by selecting reliable samples and key parameter layers, and stabilizes update directions through source-distribution alignment.
-ZOSA consists of two key components, i.e., Reliable Sample and Layer Selection (RSLS) and Source-Anchored Objective Smoothing (SAOS).
+ZOSA consists of two key components, i.e., Reliable Sample and Layer Selection (RSLS), and Source-Anchored Objective Smoothing (SAOS).
 Specifically, given edge-side single-sample streaming inputs, ZOSA first uses RSLS to select reliable samples and updatable parameter layers.
 At the sample level, RSLS estimates class bias according to how frequently the current predicted class appears in a streaming history window, and combines this bias with prediction confidence to assess sample reliability.
 Samples with lower prediction bias are identified as potentially reliable, while those with higher prediction bias are treated as potentially unreliable.
