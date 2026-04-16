@@ -13,7 +13,7 @@
 Due to source-target distribution changes, pretrained models often suffer severe performance degradation after deployment.
 Continual test-time adaptation (CTTA) alleviates this issue by updating model parameters during inference with online unlabeled test data, making it important for real-world applications such as visual understanding and embedded intelligence \citep{wang2022continualtta}.
 Recent studies have further extended CTTA to multimodal settings (MM-CTTA), such as audio-visual action recognition and event classification, and achieved strong performance by modeling modality reliability, selecting reliable modalities, performing asymmetric adaptation, or correcting supervision \citep{guo2025smoothing,yang2024read,chen2025tsa,he2026dasp}.
-However, existing MM-CTTA methods still mainly rely on backpropagation (BP), typically adapting model parameters through auxiliary objectives such as entropy minimization.
+However, existing MM-CTTA methods still mainly rely on backpropagation, typically adapting model parameters through auxiliary objectives such as entropy minimization.
 This creates a clear mismatch with practical edge-side deployment: edge devices usually provide limited computation and memory for online adaptation, and deployed models may run with inference engines or quantized components that do not support backward computation.
 Therefore, this work studies edge-side MM-CTTA under resource-constrained, forward-only, single-sample streaming deployment, aiming to achieve stable and effective multimodal adaptation without backpropagation.
 

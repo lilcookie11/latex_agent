@@ -1,35 +1,36 @@
 % !TeX root = ../main.tex
 \section{Related Work}
 
-% 中文：现有多模态 TTA/CTTA 方法主要关注测试分布变化下的跨模态可靠性问题。
-% 它们通过模态可靠性估计、偏移诊断、可信样本筛选、非对称适配或监督修正来缓解不可靠模态对融合预测的影响。
-% 这些方法与本文同样关注多模态分布偏移，但通常仍依赖反向传播更新模型参数，
-% 因而难以直接满足资源受限端侧设备上的 forward-only 适配需求。
-\paragraph{Multimodal Test-Time Adaptation.}
-Multimodal test-time adaptation aims to mitigate performance degradation caused by target-domain shifts in multimodal models.
-Compared with single-modal TTA and CTTA methods that mainly rely on entropy minimization, sample filtering, or robust online updating \citep{wang2021tent,niu2022eata,niu2023sar,wang2022continualtta}, multimodal TTA must additionally handle changing modality reliability under modality-specific corruptions.
-Recent methods therefore diagnose shifted or unreliable modalities and mitigate their influence through reliability modeling, modality selection, asymmetric adaptation, or supervision correction \citep{guo2025smoothing,yang2024read,chen2025tsa,he2026dasp}.
-Despite their effectiveness, these methods typically still update model parameters through backpropagation, requiring activation storage and gradient computation.
-This makes them difficult to deploy directly in resource-constrained, forward-only, single-sample streaming edge scenarios.
-Different from these BP-based multimodal adaptation methods, this work studies how to achieve stable multimodal CTTA without backpropagation.
+% 中文：与传统 CTTA 主要关注单模态测试流中的持续分布变化不同，MM-CTTA 需要进一步处理多模态数据在部署阶段的持续 domain shift，
+% 其中不同模态可能同时或交替发生偏移，并通过融合过程相互影响。
+% 早期工作通常将性能退化归因于模态内和跨模态的错误累积，并沿用单模态 CTTA 中的伪标签、熵最小化或师生指导等策略进行在线适配。
+% 近期方法进一步指出，多模态适配的关键在于缓解不同模态之间不断变化的信息差异和可靠性偏差，
+% 并通过可靠融合、鲁棒适配、注意力引导、互信息共享、可信样本或模态选择、非对称适配以及监督修正等机制提升性能。
+% 尽管这些方法在多模态分布偏移下取得了显著进展，它们大多仍依赖反向传播来更新模型参数，需要保存中间激活并计算梯度。
+% 这一基本依赖限制了它们在资源有限的边缘设备、仅支持前向推理的部署环境或缺乏梯度支持的黑盒模型中的实际应用。
+\paragraph{Multimodal Continual Test-Time Adaptation.}
+Unlike conventional CTTA that mainly focuses on continual distribution changes in single-modal test streams, MM-CTTA further needs to handle continual domain shifts in multimodal data during deployment, where different modalities may shift simultaneously or alternately and interact through the fusion process.
+Early works usually attribute performance degradation to intra-modal and cross-modal error accumulation, and adapt models online with strategies inherited from single-modal CTTA, such as pseudo-labeling, entropy minimization, or teacher-student guidance \citep{wang2021tent,niu2022eata,niu2023sar,wang2022continualtta}.
+Recent methods further argue that the key to multimodal adaptation lies in mitigating evolving information discrepancy and reliability bias across modalities, and improve robustness through reliable fusion, robust adaptation, attention guidance, mutual-information sharing, reliable sample or modality selection, asymmetric adaptation, and supervision correction \citep{guo2025smoothing,yang2024read,chen2025tsa,he2026dasp}.
+Despite their significant progress under multimodal distribution shifts, these methods mostly still rely on backpropagation to update model parameters, requiring activation storage and gradient computation.
+This fundamental dependence limits their practical use on resource-constrained edge devices, forward-only inference environments, or black-box models without gradient access.
 
-% 中文：BP-free TTA 方法通过避免梯度计算降低显存和计算开销。
-% 代表性方法包括 BatchNorm 统计更新、分类器原型或输出分布调整，以及基于前向搜索的 prompt 优化。
-% 这些方法提高了资源受限场景下的可部署性，但适配能力通常集中在统计量、原型、输出或 prompt 等低维组件上，
-% 难以充分吸收多模态 branch 表征内部的持续偏移。
-\paragraph{Backpropagation-Free Test-Time Adaptation.}
-To reduce the memory and computational costs of backpropagation, BP-free TTA methods perform adaptation with lightweight statistics or forward computations.
-Prediction-time BatchNorm adaptation updates normalization statistics using target data \citep{nado2020predictiontime}, T3A adjusts classifier prototypes at test time \citep{iwasawa2021t3a}, LAME corrects model outputs without updating parameters \citep{boudiaf2022lame}, and FOA optimizes lightweight prompts through derivative-free search \citep{niu2024forwardonly}.
-These methods improve deployability in resource-constrained settings, but their adaptation capacity is usually concentrated on low-dimensional components such as statistics, prototypes, outputs, or prompts.
-As a result, they are more suitable for lightweight output correction or limited parameter adjustment, and are less able to absorb persistent shifts inside modality-specific branch representations.
-For multimodal CTTA, where shifts can propagate through different modality branches and alter the inputs to fusion modules, a more flexible forward-only update mechanism is needed.
-
-% 中文：ZOO 通过前向扰动和有限差分估计更新方向，为 forward-only TTA 提供了更通用的学习机制。
-% 但现有 ZOO-based TTA 主要面向单模态设置，直接扩展到多模态 CTTA 时仍会受到不可靠样本、高维 branch 参数搜索和熵目标波动的影响。
-% 本文通过 RSLS 稳定搜索空间，并通过 SAOS 平滑优化目标，使 ZOO 能够用于端侧多模态 CTTA。
+% 中文：零阶优化（ZOO）方法不依赖显式梯度，而是通过查询目标函数值来估计更新方向，
+% 因此在梯度难以计算、不可用或计算代价过高的场景中尤其有用。
+% 经典随机无梯度方法通常通过在参数空间中施加随机扰动，并比较扰动前后的函数值来构造梯度估计。
+% 已有理论表明，这类方法虽然能够在无梯度条件下进行优化，但其收敛效率通常受到问题维度的显著影响；
+% 例如，随机无梯度方法往往需要比一阶梯度方法更多的函数查询，zero-order 随机优化的收敛率和查询复杂度也会随参数维度增大而恶化。
+% 同时，由于 ZOO 的方向估计来自随机扰动下的函数值差分，其估计方差容易受到搜索方向和样本噪声的共同影响。
+% 然而，现有 ZOO-based CTTA 主要面向单模态设置，尚未充分考虑 MM-CTTA 中的额外不稳定性：
+% 一方面，多模态模型包含多个模态编码器和融合模块，使可搜索参数空间更大且更混杂；
+% 另一方面，模态分布偏移会影响测试样本的可靠性，使单样本流式输入下的有限差分反馈更容易被噪声主导。
+% 本文提出 ZOSA，通过可靠样本与关键参数层筛选降低搜索空间噪声，并通过源锚定统计对齐平滑优化反馈，使 ZOO 能够更稳定地用于端侧 MM-CTTA。
 \paragraph{Zeroth-Order Optimization for Forward-Only Adaptation.}
-Zeroth-order optimization estimates update directions with forward perturbations and finite-difference feedback, eliminating the need for backpropagation and offering favorable memory efficiency and architectural generality.
-Recent forward-only TTA work shows that such derivative-free learning can support online unsupervised adaptation \citep{niu2024forwardonly}.
-However, existing ZOO-based TTA is mainly studied in single-modal settings.
-Directly extending it to multimodal CTTA is non-trivial because unreliable samples can corrupt perturbation feedback, high-dimensional branch parameters make search inefficient, and fluctuating entropy objectives can induce high-variance direction estimates.
-This work extends ZOO to edge-side multimodal CTTA by using RSLS to stabilize the search space and SAOS to smooth the optimization objective.
+Zeroth-order optimization (ZOO) does not require explicit gradients and estimates update directions by querying objective values, making it useful when gradients are difficult to compute, unavailable, or too expensive.
+Classical random gradient-free methods construct gradient estimates by perturbing parameters and comparing the corresponding function values.
+Prior theory shows that, although these methods enable optimization without gradients, their convergence efficiency is strongly affected by the problem dimension; for example, random gradient-free methods often require more function queries than first-order methods, and the convergence rates or query complexities of zeroth-order stochastic optimization deteriorate as the parameter dimension increases \citep{nesterov2017random,duchi2015optimal,shamir2013complexity}.
+Moreover, because ZOO estimates directions from finite differences under random perturbations, its estimation variance can be affected by both search-direction noise and sample noise \citep{liu2018stochastic}.
+However, existing ZOO-based CTTA mainly targets single-modal settings and has not sufficiently considered the additional instability in MM-CTTA.
+On the one hand, multimodal models contain multiple modality encoders and fusion modules, making the searchable parameter space larger and more entangled.
+On the other hand, modality distribution shifts affect test-sample reliability, making finite-difference feedback under single-sample streaming inputs more likely to be dominated by noise.
+ZOSA addresses these issues by using reliable sample and key parameter-layer selection to reduce search-space noise, and source-anchored statistical alignment to smooth optimization feedback, making ZOO more stable for edge-side MM-CTTA.
