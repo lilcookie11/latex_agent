@@ -25,7 +25,7 @@ This fundamental dependence limits their practical use on resource-constrained e
 % 一方面，多模态模型包含多个模态编码器和融合模块，使可搜索参数空间更大且更混杂；
 % 另一方面，模态分布偏移会影响测试样本的可靠性，使单样本流式输入下的有限差分反馈更容易被噪声主导。
 % 本文提出 ZOSA，通过可靠样本与关键参数层筛选降低搜索空间噪声，并通过源锚定统计对齐平滑优化反馈，使 ZOO 能够更稳定地用于端侧 MM-CTTA。
-\paragraph{Zeroth-Order Optimization for Forward-Only Adaptation.}
+\paragraph{Zeroth-Order Optimization.}
 Zeroth-order optimization (ZOO) does not require explicit gradients and estimates update directions by querying objective values, making it useful when gradients are difficult to compute, unavailable, or too expensive.
 Classical random gradient-free methods construct gradient estimates by perturbing parameters and comparing the corresponding function values.
 Prior theory shows that, although these methods enable optimization without gradients, their convergence efficiency is strongly affected by the problem dimension; for example, random gradient-free methods often require more function queries than first-order methods, and the convergence rates or query complexities of zeroth-order stochastic optimization deteriorate as the parameter dimension increases \citep{nesterov2017random,duchi2015optimal,shamir2013complexity}.
