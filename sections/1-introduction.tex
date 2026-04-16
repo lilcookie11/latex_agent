@@ -1,72 +1,88 @@
 % !TeX root = ../main.tex
 \section{Introduction}
 
-% 中文：多模态持续测试时适配旨在通过在推理阶段利用无标签目标域测试流进行在线适配，提升多模态模型在持续变化分布偏移下的泛化能力。
-% 该任务对于真实部署尤为重要，因为测试样本通常是顺序到达的，且目标分布会动态变化。
-% 现有大多数 TTA 和 CTTA 方法依赖反向传播，通过熵最小化或自监督等辅助目标在线更新模型参数。
-% 尽管这些方法有效，基于反向传播的适配需要保存中间激活并执行梯度计算，从而带来显著的计算、显存和时延开销；
-% 在资源受限的端侧部署中，尤其是对于全精度或压缩不足的模型，这类开销会限制其实用性。
-% 因此，本文研究一个更严格但更贴近实际部署的设定：在资源受限、仅支持前向传播、单样本流式输入的端侧环境中，实现稳定而有效的多模态持续测试时适配。
-Multimodal continual test-time adaptation (CTTA) aims to improve model generalization under continuously evolving distribution shifts by adapting multimodal models to unlabeled target-domain streams during inference. This is critical for real-world deployment, where test samples arrive sequentially and target distributions often change dynamically. Most existing CTTA methods rely on backpropagation (BP) to update model parameters through auxiliary objectives such as entropy minimization or self-supervision. While effective, BP-based adaptation incurs substantial computational, memory, and latency overhead due to activation storage and gradient computation, which limits its practicality in resource-constrained edge-side deployment, especially for full-precision or insufficiently compressed models. Therefore, this work studies a more stringent yet practically relevant setting: stable and effective multimodal continual test-time adaptation under resource-constrained, forward-only, single-sample streaming edge deployment.
+% 中文：由于源域和目标域之间的分布差异，预训练模型在部署阶段往往会出现性能下降。
+% 持续测试时适配（CTTA）通过在推理过程中利用在线无标签测试数据更新模型参数来缓解这一问题，
+% 因而对于真实世界的视觉理解和嵌入式智能等应用具有重要意义。
+% 近期研究进一步将 CTTA 扩展到多模态场景（MM-CTTA），例如音频-视频动作识别和事件分类，
+% 并通过模态可靠性建模、模态选择、非对称适配或监督修正取得了较强性能。
+% 然而，现有 MM-CTTA 方法大多仍依赖反向传播，并通常通过熵最小化等辅助目标更新模型参数。
+% 这与真实端侧部署存在明显矛盾：端侧设备通常只有有限的计算资源和内存用于在线适配，
+% 或者部署在不支持反向传播的推理引擎和量化模型组件上。
+% 因此，本文研究 MM-CTTA 在端侧场景下的部署问题，即在资源受限、仅支持前向传播、单样本流式输入的条件下实现稳定有效的多模态持续测试时适配。
+Due to source-target distribution changes, pretrained models often suffer severe performance degradation after deployment.
+Continual test-time adaptation (CTTA) alleviates this issue by updating model parameters during inference with online unlabeled test data, making it important for real-world applications such as visual understanding and embedded intelligence \citep{wang2022continualtta}.
+Recent studies have further extended CTTA to multimodal settings (MM-CTTA), such as audio-visual action recognition and event classification, and achieved strong performance by modeling modality reliability, selecting reliable modalities, performing asymmetric adaptation, or correcting supervision \citep{guo2025smoothing,yang2024read,chen2025tsa,he2026dasp}.
+However, existing MM-CTTA methods still mainly rely on backpropagation (BP), typically adapting model parameters through auxiliary objectives such as entropy minimization.
+This creates a clear mismatch with practical edge-side deployment: edge devices usually provide limited computation and memory for online adaptation, and deployed models may run with inference engines or quantized components that do not support backward computation.
+Therefore, this work studies edge-side MM-CTTA under resource-constrained, forward-only, single-sample streaming deployment, aiming to achieve stable and effective multimodal adaptation without backpropagation.
 
-% 中文：现有多模态 TTA 研究主要关注如何诊断发生偏移、偏置或不可靠的模态，并通过模态可靠性建模、模态选择、非对称适配或监督修正来缓解跨模态分布偏移。
-% 然而，这些方法通常仍依赖反向传播来更新模型参数，难以直接适用于资源受限的端侧部署，尤其是在低算力、低存储或包含量化组件的设备上。
-% 为绕开反向传播带来的计算和显存开销，已有 BP-free TTA 方法开始探索仅依赖轻量统计或前向计算的在线适配策略。
-% 例如，BN-Adapt 通过调整 BatchNorm 统计量实现快速适配，T3A 通过更新分类器原型进行测试时调整，FOA 则利用进化搜索优化 Vision Transformer 中的轻量 prompt。
-% 总体而言，现有 BP-free TTA 方法仍难以直接扩展到端侧多模态 CTTA，主要受限于两点：
-% \textbf{1）架构泛化性不足。} BN-Adapt 依赖带有 BatchNorm 的 CNN，FOA 依赖 ViT prompt 结构，二者都难以自然覆盖异质的模态分支与融合模块。
-% \textbf{2）优化容量有限。} 现有方法主要更新统计量、分类器原型或 prompt 等低维组件，难以有效吸收复杂 branch 表征内部的模态偏移。
-Existing multimodal TTA studies mainly focus on diagnosing shifted, biased, or unreliable modalities, and mitigate cross-modal distribution shifts through modality reliability modeling, modality selection, asymmetric adaptation, or supervision correction. However, these methods typically still rely on BP to update model parameters, making them difficult to deploy directly in resource-constrained edge-side environments. To bypass the computational and memory overhead of backpropagation, existing BP-free TTA methods have explored online adaptation using only lightweight statistics or forward computations. BN-Adapt performs rapid adaptation by adjusting BatchNorm statistics, T3A updates classifier prototypes at test time, and FOA optimizes lightweight prompts for Vision Transformers (ViTs) via evolutionary search. Overall, existing BP-free TTA methods remain difficult to directly extend to edge-side multimodal CTTA, due to two fundamental limitations: \textbf{1) Poor architectural generality.} BN-Adapt relies on CNNs with BatchNorm, while FOA depends on ViT prompt structures; neither naturally covers heterogeneous modality branches and fusion modules. \textbf{2) Limited optimization capacity.} Existing methods mainly update low-dimensional statistics, classifier prototypes, or prompts, making them insufficient for absorbing modality-specific shifts inside complex branch representations.
+% 中文：现有不依赖反向传播的适配方法大多基于单模态模型设计。
+% 例如，BN-Adapt 只能通过更新 BatchNorm 统计量进行适配，FOA 依赖 ViT 架构中的 prompt 更新。
+% 这些方法的适配接口通常绑定在特定组件上，难以直接迁移到 MM-CTTA 任务中。
+% 零阶优化（ZOO）为此提供了更通用的前向式学习机制。
+% ZOO 通过前向扰动和有限差分估计更新方向，无需反向传播，并且不依赖特定模型结构。
+% 然而，直接将 ZOO 用于端侧单样本多模态 CTTA 仍然效果不佳。
+% 我们的诊断分析表明，问题主要来自两个方面。
+% 第一，样本反馈与参数搜索具有双重不可靠性。
+% ZOO 通过扰动前后的损失差估计更新方向，因此每次更新都高度依赖当前测试样本的质量；
+% 在单样本流式场景下，样本噪声或模态失衡会直接放大方向估计误差。
+% 同时，多模态模型具有更大且更混杂的参数空间，在有限前向扰动预算下，ZOO 难以快速定位真正与当前 shift 相关的更新方向。
+% 第二，熵驱动目标难以为 ZOO 提供稳定的适应方向。
+% 在 domain shift 下，基于熵的损失会随样本和预测偏置剧烈波动；
+% 而 ZOO 会直接利用扰动前后的熵差估计方向，使这种目标波动进一步转化为高方差更新，从而导致在线适配不稳定。
+Existing backpropagation-free adaptation methods are mostly designed for single-modal models.
+For example, BN-Adapt adapts models by updating BatchNorm statistics, while FOA relies on prompt updates in ViT architectures \citep{nado2020predictiontime,niu2024forwardonly}.
+Their adaptation interfaces are usually tied to specific model components, making them difficult to directly transfer to MM-CTTA.
+Zeroth-order optimization (ZOO) provides a more general forward-only learning mechanism.
+It estimates update directions through forward perturbations and finite differences, requires no backpropagation, and does not rely on specific model structures.
+However, directly applying ZOO to edge-side single-sample multimodal CTTA remains ineffective in practice.
+Our diagnostic analysis identifies two main obstacles.
+\textbf{First, sample feedback and parameter search are both unreliable.}
+Since ZOO estimates update directions from perturbed loss differences, each update is highly dependent on the quality of the current test sample.
+In single-sample streaming adaptation, sample noise or modality imbalance can directly amplify direction estimation errors.
+Meanwhile, multimodal models introduce a larger and more entangled parameter space, making it difficult for ZOO to quickly locate shift-relevant update directions under limited forward-perturbation budgets.
+\textbf{Second, entropy-driven objectives fail to provide stable adaptation directions for ZOO.}
+Under continual domain shifts, entropy-based losses can fluctuate sharply with samples and prediction bias.
+Since ZOO directly uses perturbed entropy differences to estimate directions, such objective fluctuations are further converted into high-variance updates, leading to unstable online adaptation.
 
-% 中文：零阶优化（ZOO）为绕开上述限制提供了一条自然路径。
-% 作为一种具有理论基础的 BP-free 学习机制，ZOO 通过前向扰动估计更新方向，无需反向计算，因此更适合资源受限的端侧部署；
-% 同时，它不依赖特定的模型结构，因而具有更强的适用性。
-% 然而，在端侧单样本流式环境中，直接将 ZOO 应用于在线无监督多模态 TTA 在实践中效果仍然不好。
-% 我们的诊断分析表明，这主要源于两个关键挑战：
-% \textbf{1）样本空间与参数空间的双重不可靠。} 在单样本流式设置下，ZOO 的更新方向容易受到不可靠样本干扰，从而将模型牵引到错误方向；
-% 同时，多模态模型高维且异质的参数空间会使 ZOO 收敛缓慢、效率低下，并难以准确作用于真正需要吸收偏移的关键参数。
-% \textbf{2）不稳定的优化目标。} 在 ZOO 通过前向扰动估计更新方向的情形下，熵损失随样本和分布变化产生的剧烈波动会直接转化为高方差的方向估计，从而导致在线更新不稳定。
-Zeroth-order optimization (ZOO) offers a natural path toward bypassing the above limitations. As a theoretically grounded BP-free learning mechanism, ZOO estimates update directions through forward-pass perturbations and requires no backward computation, making it more suitable for resource-constrained edge-side deployment. Meanwhile, it does not rely on specific model structures, and thus provides stronger architectural applicability. However, under edge-side single-sample streaming deployment, directly applying ZOO to online unsupervised multimodal TTA remains inferior in practice. Our diagnostic analysis reveals two key challenges: \textbf{1) Dual unreliability in sample and parameter spaces.} In single-sample streaming adaptation, ZOO update directions are easily disturbed by unreliable samples, which can drive the model toward incorrect adaptation trajectories. Meanwhile, the high-dimensional and heterogeneous parameter space of multimodal models makes ZOO slow to converge and inefficient to search, preventing it from accurately targeting the key parameters that truly need shift absorption. \textbf{2) Unstable optimization objective.} When ZOO estimates update directions through forward perturbations, heavy fluctuations in entropy loss caused by sample and distribution changes are directly translated into high-variance direction estimates, resulting in unstable online updates.
+% 中文：为解决上述挑战，我们提出 Zeroth-Order Selection and Alignment（ZOSA）。
+% 该方法筛选可靠样本和关键参数层进行零阶更新，并利用源分布对齐稳定更新方向。
+% ZOSA 由两个关键组件组成，即 Reliable Sample and Layer Selection（RSLS）和 Source-Anchored Objective Smoothing（SAOS）。
+% 具体而言，给定端侧单样本流式输入，ZOSA 首先通过 RSLS 对样本可靠性和可更新参数层进行筛选。
+% 在样本层面，RSLS 根据当前预测类别在流式历史窗口中的出现频率来估计样本的类别偏置，并结合预测置信度对样本进行可靠性划分。
+% 具有较低预测偏差的样本被识别为潜在可靠，而具有较高预测偏差的样本则被视为潜在不可靠。
+% 在参数层面，RSLS 利用少量源域数据预先筛选对适配更关键的参数层，并将其作为 ZOO 的更新空间。
+% 通过同时筛选样本和参数层，RSLS 将有限的 ZOO 更新预算集中在可靠样本和关键参数层上，
+% 从而促进对可靠样本的学习，减少对不可靠样本反馈的依赖，并加快 ZOO 在有效参数子空间中的收敛。
+% 由于熵驱动目标在持续域偏移的无标签测试流中仍可能剧烈波动，我们进一步引入 Source-Anchored Objective Smoothing（SAOS）来降低这种风险。
+% SAOS 使用源域特征统计作为稳定锚点，并通过轻量流式队列聚合目标域特征统计，构造源-目标统计对齐约束。
+% 该约束为 ZOO 提供比单一熵目标更平滑、更可靠的优化反馈，从而稳定前向扰动下的更新方向。
+% 这项工作的贡献可以总结如下：
+To address the above challenges, we propose
+\textbf{Z}eroth-\textbf{O}rder \textbf{S}election and \textbf{A}lignment \textbf{(ZOSA)}.
+It performs zeroth-order updates by selecting reliable samples and key parameter layers, and stabilizes update directions through source-distribution alignment.
+ZOSA consists of two key components, i.e., Reliable Sample and Layer Selection (RSLS) and Source-Anchored Objective Smoothing (SAOS).
+Specifically, given edge-side single-sample streaming inputs, ZOSA first uses RSLS to select reliable samples and updatable parameter layers.
+At the sample level, RSLS estimates class bias according to how frequently the current predicted class appears in a streaming history window, and combines this bias with prediction confidence to assess sample reliability.
+Samples with lower prediction bias are identified as potentially reliable, while those with higher prediction bias are treated as potentially unreliable.
+At the parameter level, RSLS uses a small amount of source-domain data to pre-select parameter layers that are more critical for adaptation, and uses them as the update space for ZOO.
+By jointly selecting samples and parameter layers, RSLS concentrates the limited ZOO update budget on reliable samples and key parameter layers, thereby promoting learning from reliable samples, reducing dependence on unreliable sample feedback, and accelerating convergence in an effective parameter subspace.
+Since entropy-driven objectives can still fluctuate sharply in unlabeled test streams with continual domain shifts, we further introduce SAOS to reduce this risk.
+SAOS uses source-domain feature statistics as stable anchors and aggregates target-domain feature statistics through a lightweight streaming queue, constructing a source-target statistical alignment constraint.
+This constraint provides smoother and more reliable optimization feedback than entropy alone, thereby stabilizing update directions under forward perturbations.
+The contributions of this work are summarized as follows:
 
-% 中文：为应对上述挑战，我们提出 \textbf{B}ranch-\textbf{F}irst \textbf{C}onservative \textbf{A}daptation \textbf{(BFCA)}，
-% 一种面向端侧多模态持续测试时适配的稳定前向式框架。
-% BFCA 并不直接将 ZOO 应用于所有测试样本和全部模型参数，而是通过两个互补机制同时稳定 ZOO 的搜索空间与优化目标。
-% \textbf{1）可靠样本与层选择。} 针对样本空间与参数空间的双重不可靠，
-% BFCA 引入 Reliable Sample and Layer Selection（RSLS）。
-% RSLS 一方面通过可靠样本筛选减少噪声样本对 ZOO 方向估计的干扰，另一方面将 ZOO 的搜索限制在更可能吸收模态偏移的关键 branch 层上，
-% 避免在完整高维参数空间中进行低效搜索，从而提高前向式优化的效率与稳定性。
-% \textbf{2）源锚定目标平滑。} 针对熵驱动目标在单样本流式条件下的剧烈波动，
-% BFCA 引入 Source-Anchored Objective Smoothing（SAOS）来稳定 ZOO 的前向扰动反馈。
-% SAOS 以源域特征统计作为稳定锚点，并通过轻量流式队列聚合目标域 branch 特征统计，为优化目标提供更平滑的表示层约束。
-% 由此，ZOO 的方向能在源域统计一致性的约束下保持更稳定的更新趋势，并自然适配异质多模态架构。
-% RSLS 与 SAOS 形成协同机制：RSLS 从样本和参数层面缩小并净化 ZOO 的搜索空间，SAOS 从目标函数层面平滑 ZOO 的扰动反馈。
-% 二者共同使前向式更新能够在资源受限、单样本流式、多模态分布持续变化的端侧场景中保持稳定而有效的在线无监督适配。
-To address these challenges, we propose
-\textbf{B}ranch-\textbf{F}irst \textbf{C}onservative \textbf{A}daptation \textbf{(BFCA)},
-a stable forward-only framework for edge-side multimodal continual test-time adaptation.
-BFCA does not naively apply ZOO to all test samples and all model parameters; instead, it stabilizes ZOO from two complementary aspects: the search space and the optimization objective.
-(1) \textbf{Reliable Sample and Layer Selection (RSLS).}
-To handle the dual unreliability in sample and parameter spaces, RSLS reduces the interference of noisy samples through reliable sample screening, while constraining ZOO to selected branch layers that are more likely to absorb modality-specific shifts.
-This avoids inefficient search over the full high-dimensional parameter space and improves the efficiency and stability of forward-only optimization.
-(2) \textbf{Source-Anchored Objective Smoothing (SAOS).}
-To address the severe fluctuation of entropy-driven objectives under single-sample streaming adaptation, SAOS stabilizes the forward-perturbation feedback of ZOO.
-It uses source-domain feature statistics as stable anchors and aggregates target-domain branch feature statistics with a lightweight streaming queue, providing a smoother representation-level constraint for the optimization objective.
-As a result, ZOO directions can maintain a more stable update trend under source-statistical consistency and naturally generalize to heterogeneous multimodal architectures.
-RSLS and SAOS operate synergistically: RSLS narrows and cleans the ZOO search space at the sample and parameter-layer levels, while SAOS smooths the perturbation feedback at the objective level.
-Together, they enable stable and effective online unsupervised adaptation under resource-constrained, single-sample streaming, and continuously shifting multimodal edge deployment. Our contributions are summarized as follows:
-
-% 中文：本文的贡献可以概括为三点。
-% 第一，我们首次提出 BFCA，一种面向端侧多模态持续测试时适配的无反向传播框架。
-% BFCA 建立在零阶优化之上，仅依赖前向传播即可在单样本流式测试过程中进行在线适配，
-% 并能够自然支持包含异质模态分支与融合模块的多模态架构。
-% 第二，我们提供诊断分析，识别出 ZOO 在多模态 CTTA 中的两个核心挑战：
-% 样本与参数空间双重不可靠导致的低效搜索，以及噪声熵目标带来的不稳定方向估计。
-% 为此，我们提出 RSLS 和 SAOS，分别用于降低搜索噪声与优化维度，并为 ZOO 提供稳定、低方差的前向式学习信号。
-% 第三，我们基于 CAV-MAE backbone，在 Kinetics50-C 和 VGGSound-C 多模态 corruption benchmark 上进行系统实验，
-% 并进一步在量化 backbone 上验证 BFCA 的端侧部署效果。
-% 实验结果表明，BFCA 在保持无反向传播和低资源开销的同时，显著提升了多模态 CTTA 的适配稳定性和整体性能。
+% 中文：本文贡献如下。
+% 第一，我们提出 ZOSA，一种面向端侧多模态持续测试时适配的无反向传播框架。
+% ZOSA 基于零阶优化，仅依赖前向传播即可在单样本流式测试过程中进行在线适配。
+% 第二，我们系统分析了直接将 ZOO 用于多模态 CTTA 时的两个核心障碍：
+% 样本与参数空间双重不可靠导致的低效搜索，以及熵驱动目标波动导致的不稳定方向估计。
+% 为此，我们提出 RSLS 和 SAOS，分别从搜索空间和优化目标两个层面稳定 ZOO。
+% 第三，我们在 Kinetics50-C 和 VGGSound-C 等多模态 corruption benchmark 上进行系统实验，
+% 并在量化 backbone 上进一步验证 ZOSA 的端侧部署价值。
 \begin{itemize}
-    \item We are the first to propose BFCA, a backpropagation-free framework for edge-side multimodal continual test-time adaptation. Built on zeroth-order optimization, BFCA performs online adaptation using only forward passes under single-sample streaming deployment, and naturally supports multimodal architectures with heterogeneous modality branches and fusion modules.
-    \item We provide a diagnostic analysis identifying two core challenges of applying ZOO to multimodal CTTA: inefficient search caused by dual unreliability in sample and parameter spaces, and unstable direction estimation caused by noisy entropy-driven objectives. To address them, we introduce RSLS and SAOS, which reduce search noise and optimization dimensionality while providing stable, low-variance forward-only learning signals for ZOO.
-    \item We conduct comprehensive experiments with CAV-MAE on Kinetics50-C and VGGSound-C multimodal corruption benchmarks, and further evaluate BFCA on quantized backbones to validate its edge-side deployment value. Results show that BFCA significantly improves adaptation stability and overall performance while preserving backpropagation-free and low-resource adaptation.
+    \item We propose ZOSA, a backpropagation-free framework for edge-side multimodal continual test-time adaptation. Built on zeroth-order optimization, ZOSA performs online adaptation using only forward passes under single-sample streaming deployment.
+    \item We provide a diagnostic analysis identifying two core obstacles of applying ZOO to multimodal CTTA: inefficient search caused by dual unreliability in sample and parameter spaces, and unstable direction estimation caused by fluctuating entropy-driven objectives. We address them with RSLS and SAOS, which stabilize ZOO from the search-space and objective perspectives, respectively.
+    \item We conduct comprehensive experiments with CAV-MAE on Kinetics50-C and VGGSound-C multimodal corruption benchmarks, and further evaluate ZOSA on quantized backbones to validate its edge-side deployment value. Results show that ZOSA improves adaptation stability and overall performance while preserving backpropagation-free and low-resource adaptation.
 \end{itemize}

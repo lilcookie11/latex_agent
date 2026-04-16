@@ -1,4 +1,28 @@
 % !TeX root = ../main.tex
 \section{Method}
+In this section, we present BFCA for multimodal continual test-time adaptation (MM-CTTA).
+The overall framework is illustrated in Figure~\ref{fig:framework}.
 
-Describe the model, assumptions, optimization procedure, and design rationale.
+\subsection{Problem Definition}
+\label{sec:problem}
+Without loss of generality, we formulate MM-CTTA in the context of an audio-video classification task.
+We consider a standard multimodal model
+$f_{\Theta}=\{f^{a}_{\Theta_a}, f^{v}_{\Theta_v}, f^{u}_{\Theta_u}, f^{c}_{\Theta_c}\}$,
+where $f^{a}_{\Theta_a}$ and $f^{v}_{\Theta_v}$ are modality-specific encoders for audio and video inputs, respectively, $f^{u}_{\Theta_u}$ denotes the multimodal fusion module, and $f^{c}_{\Theta_c}$ is the classification head.
+The model is first trained on a labeled source domain
+$\mathcal{D}_s=\{(\mathbf{x}^{a}_i,\mathbf{x}^{v}_i,y_i)\}_{i=1}^{N_s}\sim P_s(\mathbf{x},y)$,
+where each sample consists of paired audio $\mathbf{x}^{a}_i$ and video $\mathbf{x}^{v}_i$. During deployment, the source data and target labels are unavailable.
+The model receives an unlabeled target stream
+$\mathcal{D}_t=\{(\mathbf{x}^{a}_t,\mathbf{x}^{v}_t)\}_{t=1}^{T}$,
+where each sample is drawn sequentially from a non-stationary target distribution $Q_t(\mathbf{x})$.
+The target distribution may change over time and may corrupt different modalities with different severity.
+At each time step, MM-CTTA allows the model to adapt online using only the current test sample and lightweight historical statistics accumulated from the stream.
+
+
+\subsection{Reliable Sample and Layer Selection}
+\label{sec:rsls}
+\textbf{Motivation} 
+
+\subsection{Source-Anchored Objective Smoothing}
+\label{sec:saos}
+\textbf{Motivation}
