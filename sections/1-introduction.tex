@@ -24,13 +24,14 @@ Therefore, this work studies edge-side MM-CTTA under resource-constrained, forwa
 % ZOO 通过前向扰动和有限差分估计更新方向，无需反向传播，并且不依赖特定模型结构。
 % 然而，直接将 ZOO 用于端侧单样本多模态 CTTA 仍然效果不佳。
 % 我们的诊断分析表明，问题主要来自两个方面。
-% 第一，样本反馈与参数搜索具有双重不可靠性。
-% ZOO 通过扰动前后的损失差估计更新方向，因此每次更新都高度依赖当前测试样本的质量；
-% 在单样本流式场景下，样本噪声或模态失衡会直接放大方向估计误差。
-% 同时，多模态模型具有更大且更混杂的参数空间，在有限前向扰动预算下，ZOO 难以快速定位真正与当前 shift 相关的更新方向。
-% 第二，熵驱动目标难以为 ZOO 提供稳定的适应方向。
-% 在 domain shift 下，基于熵的损失会随样本和预测偏置剧烈波动；
-% 而 ZOO 会直接利用扰动前后的熵差估计方向，使这种目标波动进一步转化为高方差更新，从而导致在线适配不稳定。
+% 第一，局部前向反馈与熵目标波动会共同导致方向漂移。
+% ZOO 通过扰动前后的目标差值近似更新方向，其在线优化过程天然依赖当前测试样本所提供的局部反馈。
+% 在多模态单样本流式适配中，模态失衡与融合偏置会使这种反馈难以稳定。
+% 同时，在持续域偏移场景下，基于熵的损失会产生明显波动，进一步放大方向估计中的噪声。
+% 结果是，ZOO 不仅难以获得稳定的更新依据，还容易被瞬时偏置牵引，导致适配方向持续漂移。
+% 第二，高维多模态参数空间会降低 ZOO 的搜索效率。
+% 多模态模型参数规模更大且作用位置更复杂，直接在完整参数空间中进行前向扰动不仅会降低 ZOO 的收敛速度，
+% 也会使有限的前向查询预算分散到大量对当前域偏移不敏感的参数上，导致方向估计方差增大、信噪比降低，难以快速定位真正有效的更新方向。
 Existing backpropagation-free adaptation methods are mostly designed for single-modal models.
 For example, BN-Adapt adapts models by updating BatchNorm statistics, while FOA relies on prompt updates in ViT architectures \citep{nado2020predictiontime,niu2024forwardonly}.
 Their adaptation interfaces are usually tied to specific model components, making them difficult to directly transfer to MM-CTTA.
@@ -38,13 +39,15 @@ Zeroth-order optimization (ZOO) provides a more general forward-only learning me
 It estimates update directions through forward perturbations and finite differences, requires no backpropagation, and does not rely on specific model structures.
 However, directly applying ZOO to edge-side single-sample multimodal CTTA remains ineffective in practice.
 Our diagnostic analysis identifies two main obstacles.
-\textbf{First, sample feedback and parameter search are both unreliable.}
-Since ZOO estimates update directions from perturbed loss differences, each update is highly dependent on the quality of the current test sample.
-In single-sample streaming adaptation, sample noise or modality imbalance can directly amplify direction estimation errors.
-Meanwhile, multimodal models introduce a larger and more entangled parameter space, making it difficult for ZOO to quickly locate shift-relevant update directions under limited forward-perturbation budgets.
-\textbf{Second, entropy-driven objectives fail to provide stable adaptation directions for ZOO.}
-Under continual domain shifts, entropy-based losses can fluctuate sharply with samples and prediction bias.
-Since ZOO directly uses perturbed entropy differences to estimate directions, such objective fluctuations are further converted into high-variance updates, leading to unstable online adaptation.
+\textbf{First, local forward feedback and entropy fluctuations jointly cause direction drift.}
+ZOO approximates update directions from perturbed objective differences, so its online optimization process naturally depends on the local feedback provided by the current test sample.
+In single-sample multimodal streaming adaptation, modality imbalance and fusion bias can make such feedback unstable.
+Meanwhile, under continual domain shifts, entropy-based losses can fluctuate noticeably, further amplifying the noise in direction estimation.
+As a result, ZOO not only struggles to obtain stable update cues, but can also be pulled by instantaneous bias, causing the adaptation direction to drift over time.
+\textbf{Second, high-dimensional multimodal parameter spaces reduce the search efficiency of ZOO.}
+Multimodal models have larger parameter scales and more complex functional locations.
+Directly perturbing the full parameter space not only slows the convergence of ZOO, but also disperses the limited forward-query budget over many parameters that are insensitive to the current domain shift.
+This increases the variance of direction estimation, reduces the signal-to-noise ratio, and makes it difficult to quickly locate truly effective update directions.
 
 % 中文：为解决上述挑战，我们提出 Zeroth-Order Selection and Alignment（ZOSA）。
 % 该方法筛选可靠样本和关键参数层进行零阶更新，并利用源分布对齐稳定更新方向。
@@ -77,12 +80,12 @@ The contributions of this work are summarized as follows:
 % 第一，我们提出 ZOSA，一种面向端侧多模态持续测试时适配的无反向传播框架。
 % ZOSA 基于零阶优化，仅依赖前向传播即可在单样本流式测试过程中进行在线适配。
 % 第二，我们系统分析了直接将 ZOO 用于多模态 CTTA 时的两个核心障碍：
-% 样本与参数空间双重不可靠导致的低效搜索，以及熵驱动目标波动导致的不稳定方向估计。
+% 局部前向反馈与熵目标波动导致的方向漂移，以及高维多模态参数空间导致的低效搜索。
 % 为此，我们提出 RSLS 和 SAOS，分别从搜索空间和优化目标两个层面稳定 ZOO。
 % 第三，我们在 Kinetics50-C 和 VGGSound-C 等多模态 corruption benchmark 上进行系统实验，
 % 并在量化 backbone 上进一步验证 ZOSA 的端侧部署价值。
 \begin{itemize}
     \item We propose ZOSA, a backpropagation-free framework for edge-side multimodal continual test-time adaptation. Built on zeroth-order optimization, ZOSA performs online adaptation using only forward passes under single-sample streaming deployment.
-    \item We provide a diagnostic analysis identifying two core obstacles of applying ZOO to multimodal CTTA: inefficient search caused by dual unreliability in sample and parameter spaces, and unstable direction estimation caused by fluctuating entropy-driven objectives. We address them with RSLS and SAOS, which stabilize ZOO from the search-space and objective perspectives, respectively.
+    \item We provide a diagnostic analysis identifying two core obstacles of applying ZOO to multimodal CTTA: direction drift caused by local forward feedback and entropy fluctuations, and inefficient search caused by high-dimensional multimodal parameter spaces. We address them with RSLS and SAOS, which stabilize ZOO from the search-space and objective perspectives, respectively.
     \item We conduct comprehensive experiments with CAV-MAE on Kinetics50-C and VGGSound-C multimodal corruption benchmarks, and further evaluate ZOSA on quantized backbones to validate its edge-side deployment value. Results show that ZOSA improves adaptation stability and overall performance while preserving backpropagation-free and low-resource adaptation.
 \end{itemize}
