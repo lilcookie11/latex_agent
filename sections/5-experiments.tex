@@ -12,10 +12,10 @@ Kinetics50-C and VGGSound-C cover both visual corruptions and audio corruptions,
 
 
 \subsection{Comparision with SOTAs}
-We compare against a frozen \texttt{no\_adapt} model and a broad set of continual test-time adaptation baselines, including FOA, T3A, Tent, SAR, READ, ContinualMAE, DeYO, REM, PTA, BECoTTA-MoE, SuMi, and VIDA. Some methods have incomplete verified exports in a subset of co-shift settings; when this happens, we keep the available detailed rows for protocol-specific tables and only omit methods from the cross-protocol summary if a required aggregate is unavailable.
+We compare against a frozen \texttt{no\_adapt} model and a broad set of continual test-time adaptation baselines, including FOA, T3A, Tent, SAR, READ, ContinualMAE, DeYO, REM, PTA, BECoTTA-MoE, SuMi, and VIDA. Some methods have incomplete verified exports in a subset of co-shift settings. When only protocol-level summaries are verified, we keep the aggregate result in the cross-protocol summary table but omit unverified detailed rows from protocol-specific tables.
 
 \begin{table}[t]
-\caption{Kinetics50-C interleaved modality corruption. We follow the grouped presentation style where one audio corruption is associated with a local sequence of visual corruptions. Accuracy is reported in \%. Higher is better.}
+\caption{Kinetics50-C interleaved single-modality corruption. Columns labeled \texttt{V:*} indicate that the audio modality remains clean while only the video modality is corrupted, whereas columns labeled \texttt{A:*} indicate that the video modality remains clean while only the audio modality is corrupted. Accuracy is reported in \%. Higher is better.}
 \label{tab:k50_interleaved}
 \centering
 \scriptsize
@@ -24,30 +24,30 @@ We compare against a frozen \texttt{no\_adapt} model and a broad set of continua
 \begin{tabular}{l|ccccccccccccccccccccc|c}
 \toprule
 Method
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{3}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{3}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
 & Avg. \\
 \cmidrule(lr){2-3}\cmidrule(lr){4-4}\cmidrule(lr){5-6}\cmidrule(lr){7-7}
 \cmidrule(lr){8-9}\cmidrule(lr){10-10}\cmidrule(lr){11-13}\cmidrule(lr){14-14}
 \cmidrule(lr){15-16}\cmidrule(lr){17-17}\cmidrule(lr){18-19}\cmidrule(lr){20-20}
 \cmidrule(lr){21-22}
-& Gauss. & Shot & Gauss. & Impul. & Defoc. & Traff. & Glass & Mot. & Crowd.
-& Zoom & Snow & Frost & Rain & Fog & Brit. & Thund. & Contr. & Elas. & Wind & Pix. & JPEG & Avg. \\
+& V:Gauss. & V:Shot & A:Gauss. & V:Impul. & V:Defoc. & A:Traff. & V:Glass & V:Mot. & A:Crowd.
+& V:Zoom & V:Snow & V:Frost & A:Rain & V:Fog & V:Brit. & A:Thund. & V:Contr. & V:Elas. & A:Wind & V:Pix. & V:JPEG & Avg. \\
 \midrule
 \multicolumn{23}{c}{$t \longrightarrow$} \\
 \midrule
-\texttt{Source}
+\texttt{no\_adapt}
 & 46.88 & 48.44 & 68.75 & 46.88 & 65.62 & 64.84 & 72.66 & 80.47 & 67.97 & 57.03 & 61.72 & 61.72 & 67.97 & 49.22 & 75.78 & 74.22 & 50.78 & 61.72 & 75.78 & 68.75 & 65.62 & 63.47 \\ \hline
 FOA
 & 48.44 & 50.78 & 68.75 & 42.19 & 67.97 & 64.84 & 74.22 & 80.47 & 70.31 & 57.03 & 63.28 & 66.41 & 69.53 & 60.94 & 75.00 & 75.00 & 53.91 & 65.62 & 78.12 & 70.31 & 69.53 & 65.36 \\
@@ -61,7 +61,7 @@ SAR
 & 42.97 & 34.38 & 46.88 & 32.03 & 34.38 & 35.16 & 59.38 & 62.50 & 27.34 & 47.66 & 44.53 & 35.16 & 47.66 & 50.00 & 57.81 & 26.56 & 28.91 & 31.25 & 51.56 & 39.06 & 38.28 & 41.59 \\
 READ
 & 46.88 & 49.22 & 68.75 & 46.88 & 65.62 & 66.41 & 70.31 & 79.69 & 70.31 & 58.59 & 60.94 & 65.62 & 68.75 & 53.91 & 75.00 & 73.44 & 51.56 & 61.72 & 76.56 & 68.75 & 67.19 & 64.10 \\
-CMAE
+ContinualMAE
 & 47.66 & 48.44 & 68.75 & 46.88 & 65.62 & 64.84 & 72.66 & 80.47 & 69.53 & 57.03 & 61.72 & 61.72 & 67.97 & 49.22 & 75.78 & 74.22 & 50.78 & 61.72 & 76.56 & 68.75 & 65.62 & 63.62 \\
 DeYO
 & 46.88 & 48.44 & 68.75 & 46.88 & 65.62 & 66.41 & 72.66 & 80.47 & 70.31 & 58.59 & 60.94 & 60.16 & 69.53 & 46.09 & 75.78 & 75.00 & 48.44 & 60.16 & 78.91 & 70.31 & 66.41 & 63.65 \\
@@ -69,7 +69,7 @@ REM
 & 47.66 & 48.44 & 68.75 & 46.88 & 65.62 & 65.62 & 72.66 & 80.47 & 69.53 & 57.03 & 61.72 & 62.50 & 67.97 & 51.56 & 75.00 & 75.00 & 50.78 & 60.94 & 78.12 & 66.41 & 65.62 & 63.73 \\
 PTA
 & 46.88 & 49.22 & 68.75 & 46.09 & 66.41 & 66.41 & 71.88 & 79.69 & 70.31 & 57.03 & 61.72 & 64.84 & 69.53 & 45.31 & 75.00 & 74.22 & 50.00 & 60.94 & 78.91 & 68.75 & 63.28 & 63.58 \\
-BECoTTA
+BECoTTA-MoE
 & 45.31 & 47.66 & 71.09 & 46.09 & 66.41 & 66.41 & 73.44 & 80.47 & 67.97 & 54.69 & 60.16 & 57.81 & 68.75 & 46.09 & 74.22 & 71.88 & 50.78 & 60.16 & 74.22 & 66.41 & 65.62 & 63.54 \\
 SuMi
 & 47.66 & 49.22 & 69.53 & 46.88 & 67.19 & 65.62 & 72.66 & 79.69 & 68.75 & 53.91 & 62.50 & 65.62 & 67.97 & 55.47 & 74.22 & 71.88 & 50.00 & 63.28 & 76.56 & 69.53 & 64.84 & 63.95 \\
@@ -83,7 +83,7 @@ VIDA
 \end{table}
 
 \begin{table}[t]
-\caption{Average accuracy (\%) across six multimodal corruption protocols. Higher is better. The proposed method is competitive in all settings and achieves the strongest results on the two Kinetics50-C co-shift protocols.}
+\caption{Average accuracy (\%) across six multimodal corruption protocols. Higher is better. The proposed method achieves the best results in five of the six settings and remains competitive on the remaining one.}
 \label{tab:main_results}
 \centering
 \small
@@ -110,11 +110,11 @@ VIDA & 59.67 & 38.73 & 30.75 & 23.75 & 3.00 & 3.50 \\
 \end{table}
 
 \paragraph{Main results.}
-Table~\ref{tab:k50_interleaved} gives the detailed per-corruption view in the grouped layout used throughout our benchmark tables. This presentation makes the temporal corruption schedule explicit and shows how one audio corruption aligns with a short run of visual corruptions. The \textbf{BFCA} row makes the intended message clear: our method improves over the frozen model across nearly all local corruption groups and remains competitive with the strongest baselines at fine granularity.
+Table~\ref{tab:k50_interleaved} gives the detailed per-corruption view in the grouped layout used throughout our benchmark tables. Each column explicitly indicates which modality remains clean and which modality is corrupted, making the alternating single-modality schedule clear. The \textbf{BFCA} row shows that our method improves over the frozen model across nearly all local corruption groups and remains competitive with the strongest baselines at fine granularity.
 
 Table~\ref{tab:main_results} then summarizes the protocol-level averages. BFCA consistently improves over the frozen \texttt{no\_adapt} model across all six evaluation protocols. The gains are especially large under paired cross-modal shifts on Kinetics50-C, where our method improves the average accuracy from $47.33\%$ to $56.83\%$ on PairTrack Easy and from $44.43\%$ to $55.63\%$ on PairTrack Async Hard. These margins indicate that explicit multimodal adaptation is particularly valuable when the two modalities drift jointly rather than independently.
 
-On the two interleaved settings, BFCA remains highly competitive. It reaches $66.59\%$ on Kinetics50-C and $47.58\%$ on VGGSound-C, clearly improving over the frozen baseline and outperforming FOA on Kinetics50-C while remaining within a small gap on VGGSound-C. The same pattern is even more pronounced on the VGGSound-C co-shift protocols, where BFCA improves over \texttt{no\_adapt} by roughly ten absolute points and also surpasses the strongest competing FOA variant by a clear margin.
+On the two interleaved settings, BFCA remains highly competitive. It reaches $66.59\%$ on Kinetics50-C and $47.58\%$ on VGGSound-C, clearly improving over the frozen baseline and outperforming FOA on Kinetics50-C while remaining within only $0.63$ points on VGGSound-C. The same pattern is even more pronounced on the VGGSound-C co-shift protocols, where BFCA improves over \texttt{no\_adapt} by roughly ten absolute points and also surpasses the strongest competing FOA variant by $3.90$ and $4.24$ points on PairTrack Easy and Async Hard, respectively.
 
 \paragraph{Discussion.}
 The results suggest a clear robustness profile. First, our method is not merely recovering clean-model performance after mild corruption; it remains effective under harder co-shift scenarios where both modalities are perturbed simultaneously. Second, the relative advantage is larger on Kinetics50-C than on VGGSound-C, which suggests that the current design handles structured co-shifts better than highly diverse open-domain audio-visual noise. Third, several classic CTTA baselines such as Tent, SAR, and PTA degrade noticeably on the harder multimodal settings, whereas BFCA remains stable. This behavior is consistent with the goal of learning a more reliable multimodal adaptation rule instead of relying on single-modality entropy minimization alone.

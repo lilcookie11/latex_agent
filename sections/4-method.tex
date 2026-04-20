@@ -1,8 +1,5 @@
 % !TeX root = ../main.tex
 \section{Method}
-In this section, we present BFCA for multimodal continual test-time adaptation (MM-CTTA).
-The overall framework is illustrated in Figure~\ref{fig:framework}.
-
 \subsection{Problem Definition}
 \label{sec:problem}
 Without loss of generality, we formulate MM-CTTA in the context of an audio-video classification task.
@@ -19,10 +16,228 @@ The target distribution may change over time and may corrupt different modalitie
 At each time step, MM-CTTA allows the model to adapt online using only the current test sample and lightweight historical statistics accumulated from the stream.
 
 
-\subsection{Reliable Sample and Layer Selection}
-\label{sec:rsls}
-\textbf{Motivation} 
+\subsection{Shift-Sensitive Layer Selection}
+\label{sec:layer_select}
 
-\subsection{Source-Anchored Objective Smoothing}
-\label{sec:saos}
-\textbf{Motivation}
+% 中文：尽管 ZOO 能够以较高的内存效率摆脱反向传播进行在线更新，
+% 但其收敛速度会随着可优化参数数量的增加而显著恶化。
+% 对于包含多分支与融合模块的多模态模型而言，这一问题尤为突出。
+% 为此，我们首先提出一种 shift-sensitive layer selection 策略，
+% 通过优先选择在当前目标窗口中仍保留显著域差异信息的规范化层进行更新，
+% 从而有效降低 ZOO 的优化维度并提升在线适配效率。
+Although ZOO enables online adaptation without backpropagation and with favorable memory efficiency, its convergence degrades significantly as the number of optimizable parameters increases.
+This issue becomes particularly severe for multimodal models with multiple modality branches and fusion modules.
+To address it, we first introduce a shift-sensitive layer selection strategy, which prioritizes normalization layers that still preserve substantial domain-discrepancy information under the current target shift.
+In this way, ZOO operates in a compact parameter subspace, reducing the effective optimization dimension and improving online adaptation efficiency.
+
+% 中文：从表示对齐的角度看，若某层在适配前已经表现出较强的 source-target 一致性，
+% 则继续更新该层的收益有限；相反，若某层对 ID/OOD 样本仍表现出明显的特征分离，
+% 则说明该层仍保留较强的域特异性信息，因此更值得被纳入在线更新。
+% 为了识别这些关键层，我们进一步引入一个轻量级、与架构无关的代理指标——聚类纯度，
+% 用于衡量各模态分支逐层特征的域可分性，并据此选择对当前域偏移最敏感的层用于 ZOO 更新。
+From the perspective of representation alignment, if a layer already exhibits strong source-target consistency before adaptation, further updating that layer is unlikely to bring substantial benefit.
+In contrast, if a layer still shows clear feature separation between in-distribution (ID) and out-of-distribution (OOD) samples, then it retains stronger domain-specific information and is therefore more worthwhile to adapt online.
+To identify such layers, we introduce a lightweight, architecture-agnostic proxy metric, namely clustering purity, to measure layer-wise domain separability in each modality branch and select the layers that are most sensitive to the current shift for ZOO updates.
+
+% 中文：具体而言，我们分别从 ID 域和 OOD 域采样少量参考样本，
+% 用于后续的层敏感性评估。OOD 样本可在测试流开始阶段通过轻量 OOD 检测机制获得，
+% 而 ID 样本则可直接从源域参考数据中选取，这在实际部署中开销较低且与既有工作一致。
+Specifically, we sample a small number of reference samples from the ID domain and the OOD domain for subsequent layer-sensitivity evaluation.
+The OOD subset can be collected at the beginning of the test stream with a lightweight OOD detector, while the ID subset is directly sampled from the source-domain reference set.
+This design introduces only limited overhead in deployment and is consistent with common practice in prior adaptation work.
+We denote these two reference subsets by $\mathcal D_{\mathrm{id}}=\{\mathbf{x}^{\mathrm{id}}_i\}_{i=1}^{N}$ and $\mathcal D_{\mathrm{ood}}=\{\mathbf{x}^{\mathrm{ood}}_i\}_{i=1}^{N}$.
+
+% 中文：随后，对于每个模态分支 m∈{a,v} 的候选规范化层 l，
+% 我们分别提取 ID 子集和 OOD 子集上的层特征表示。
+% 记该层在 ID/OOD 样本上的 token 特征为 Z_{i,l}^{id,m} 和 Z_{i,l}^{ood,m}，
+% 其中 d 表示特征维度，M 表示 token 数。
+For each candidate normalization layer $l$ in modality branch $m\in\{a,v\}$, we extract its features on the ID and OOD subsets, denoted by $\mathbf{Z}^{\mathrm{id},m}_{i,l}\in\mathbb{R}^{M\times d}$ and $\mathbf{Z}^{\mathrm{ood},m}_{i,l}\in\mathbb{R}^{M\times d}$, respectively, where $d$ is the feature dimension and $M$ is the number of tokens.
+For the $r$-th token position, we gather the corresponding ID and OOD feature vectors and perform a two-cluster partition over them.
+The clustering purity of layer $l$ in branch $m$ at token position $r$ is defined as
+\begin{equation}
+\label{eq:token_purity}
+P_{l,r}^{m}
+=
+\frac{1}{2N}
+\sum_{q=1}^{2}
+\max_{c\in\{\mathrm{id},\mathrm{ood}\}}
+\left|
+\mathcal C_{q,r}^{m}\cap \mathcal Y_c^{m}
+\right|,
+\end{equation}
+where $\mathcal C_{q,r}^{m}$ denotes the $q$-th cluster at token position $r$ in branch $m$, and $\mathcal Y_c^{m}$ is the set of branch-$m$ features belonging to domain $c$. We then average the token-wise purity scores to obtain the overall clustering purity of layer $l$ in branch $m$: $P_l^{m}=\frac{1}{M}\sum_{r=1}^{M}P_{l,r}^{m}$.
+% 中文：进一步地，对所有 token 位置的聚类纯度取平均，
+% 得到第 l 层的整体聚类纯度。
+% 较高的聚类纯度表示该层特征在 ID/OOD 之间仍具有更强的域特异性分离，
+% 说明该层对当前域偏移更为敏感，也意味着其仍保留较大的适配潜力；
+% 相反，较低的聚类纯度则表明该层特征在两个域之间已经较为混合，
+% 继续更新该层的收益相对有限。
+A higher purity score indicates that the layer still preserves stronger domain-specific separation between ID and OOD features, suggesting that it is more sensitive to the current shift and still has larger adaptation potential.
+Conversely, a lower purity score implies that the layer is already more domain-invariant, so further updating it is less beneficial.
+% 中文：基于上述层敏感度度量，我们进一步为每个模态分支选择聚类纯度最高的层用于后续 ZOO 更新。
+% 对于分支 m，可调层集合定义为 TopK(P_l^m)；在后续适配过程中，
+% 我们仅对集合 S 中对应的规范化层执行在线更新，而将其余参数保持冻结。
+% 通过这种方式，模型能够显著降低 ZOO 的有效优化维度，提高方向估计的稳定性与收敛速度，
+% 同时使有限的在线更新预算集中作用于真正 shift-sensitive 的关键层上。
+Based on this layer-sensitivity metric, we select the layers with the highest clustering purity in each modality branch for subsequent ZOO updates:$
+\mathcal S^{m}=\mathrm{TopK}\{P_l^{m}\}_{l=1}^{L_m}, m\in\{a,v\}$, where $L_m$ is the number of candidate layers in branch $m$.
+During online adaptation, we update only the normalization layers indexed by $\mathcal S^{a}$ and $\mathcal S^{v}$, while freezing all remaining parameters.
+This design substantially reduces the effective optimization dimension of ZOO, improves the stability and convergence speed of direction estimation, and concentrates the limited online update budget on genuinely shift-sensitive layers.
+
+
+\subsection{Reliability-Calibrated Learning Signal Construction}
+\label{sec:rsls}
+
+% 中文：在将 ZOO 的更新限制在选定的 shift-sensitive 层之后，仍然存在一个关键问题：
+% 其更新方向既容易受到不可靠样本的扰动，又难以仅依赖熵驱动目标保持稳定。
+% 现有基于批统计的可靠样本判别方法难以直接适用于单样本流式场景；
+% 并且在持续分布偏移条件下，熵目标本身仍可能发生剧烈波动，从而进一步放大方向估计中的噪声，
+% 增加模型预测坍缩的风险。为应对上述问题，我们设计了一个面向单样本流式多模态 ZOO 的稳定学习信号构造模块，
+% 通过可靠样本筛选抑制不可信反馈的干扰，并结合分布对齐约束对前向式方向估计进行稳定化修正，
+% 从而有效缓解持续流式域偏移下的预测偏差累积。
+After restricting ZOO updates to the selected shift-sensitive layers, a key challenge still remains:
+its update directions are easily perturbed by unreliable samples, yet they cannot remain stable when driven by entropy alone.
+Existing reliable-sample identification strategies based on batch statistics are not directly applicable to single-sample streaming settings.
+Moreover, under continual distribution shifts, the entropy objective itself can fluctuate sharply, which further amplifies the noise in direction estimation and increases the risk of prediction collapse.
+To address this issue, we design a stabilized learning-signal construction module for single-sample streaming multimodal ZOO.
+This module suppresses the interference of unreliable feedback through reliable-sample screening, and further regularizes forward-only direction estimation with a distribution-alignment constraint, thereby mitigating the accumulation of prediction bias under continual streaming domain shifts.
+
+% 中文：我们首先判断当前流式样本是否可靠，并据此促进或抑制其对 ZOO 更新方向的贡献。
+% 给定时刻 t 的当前多模态样本 x_t，我们维护一个长度为 W 的局部历史窗口，
+% 并利用窗口内的预测频率来估计当前样本是否受到类别偏置影响。
+Specifically, we first determine whether the current streaming sample is reliable, and accordingly promote or suppress its contribution to the ZOO update direction.
+Given the current multimodal sample $\mathbf{x}_t$ at time step $t$, we maintain a local history window of length $W$, denoted by $\mathcal{W}_t = \{\mathbf{x}_{t-W+1}, \mathbf{x}_{t-W+2}, \dots, \mathbf{x}_t\}$.
+Let the predicted class of $\mathbf{x}_t$ be $\hat{y}_t=\arg\max p(\mathbf{x}_t)$, where $p(\mathbf{x}_t)$ denotes the predictive probability distribution of the current sample.
+For each historical sample $\mathbf{x}_i\in\mathcal{W}_t$, let $\hat{y}_i$ denote its predicted class.
+To characterize the local prediction distribution within the current window, we define the prediction frequency of class $c$ as $F_t(c)=\frac{1}{|\mathcal{W}_t|}\sum_{\mathbf{x}_i\in \mathcal{W}_t}\mathbf{1}(\hat y_i=c)$, where $\mathbf{1}(\cdot)$ is the indicator function.
+We further define the average prediction frequency in the current window as $\bar{F}_t=\frac{1}{|\mathcal{W}_t|}\sum_{\mathbf{x}_i\in \mathcal{W}_t}F_t(\hat{y}_i)$.
+Based on these quantities, we measure the prediction bias of the current sample by
+\begin{equation}
+\label{eq:bias_score}
+B(\mathbf{x}_t)=F_t(\hat{y}_t)-\bar{F}_t.
+\end{equation}
+% 中文：当 B(x_t) 较大时，说明当前样本所属预测类别在局部窗口内被更频繁地激活，
+% 因而更可能受到预测偏置的影响；反之，则说明该样本相对不易落入被过度强化的预测模式。
+% 此外，我们用当前样本最大预测概率来表示其预测置信度。
+When $B(\mathbf{x}_t)$ is large, the predicted class of the current sample is activated more frequently than the average level in the local window, indicating a higher risk of prediction bias.
+In contrast, a smaller $B(\mathbf{x}_t)$ suggests that the sample is less likely to fall into an over-amplified prediction pattern.
+We also define the prediction confidence of the current sample as $C(\mathbf{x}_t)=\max p(\mathbf{x}_t)$.
+
+% 中文：只有当样本同时满足偏置较小和置信度较高时，才视为可靠样本；否则视为不可靠样本。
+% 在此基础上，我们再依据偏置和置信度的相对分位数，为当前样本分配权重。
+Based on the prediction bias $B(\mathbf{x}_t)$ and confidence $C(\mathbf{x}_t)$, we first partition the current sample into a reliable or unreliable set:
+\begin{equation}
+\label{eq:sample_partition}
+\mathbf{x}_t \in
+\begin{cases}
+\mathcal{X}_t^{+}, & \text{if } B(\mathbf{x}_t)\le \tau_b \ \text{and}\ C(\mathbf{x}_t)\ge \tau_c,\\[2pt]
+\mathcal{X}_t^{-}, & \text{otherwise},
+\end{cases}
+\end{equation}
+where $\tau_b$ and $\tau_c$ denote the bias threshold and the confidence threshold, respectively.
+In other words, a sample is treated as reliable only when it simultaneously exhibits low prediction bias and high confidence; otherwise it is regarded as unreliable.
+Accordingly, the reliable-sample set within the local window is defined as $\mathcal{R}_t=\{\mathbf{x}_i\in \mathcal W_t \mid B(\mathbf{x}_i)\le \tau_b,\ C(\mathbf{x}_i)\ge \tau_c\}$.
+Building on this partition, we adopt an improved quantile-based importance weighting strategy to determine the contribution of the current sample according to its relative position in $\mathcal{R}_t$ and its confidence level.
+If $\mathbf{x}_t\in\mathcal{X}_t^{+}$, we compute its bias quantile score $Q_B(\mathbf{x}_t)$ and confidence quantile score $Q_C(\mathbf{x}_t)$ within the reliable set $\mathcal{R}_t$.
+Here, $Q_B(\mathbf{x}_t)$ follows the principle that lower bias is more important, while $Q_C(\mathbf{x}_t)$ gives larger scores to more confident samples.
+The resulting weighting indicator is
+\begin{equation}
+\label{eq:indicator_weight}
+I(\mathbf{x}_t)=
+\begin{cases}
+Q_B(\mathbf{x}_t)\,Q_C(\mathbf{x}_t), & \mathbf{x}_t\in \mathcal X_t^{+},\\[4pt]
+-\gamma, & \mathbf{x}_t\in \mathcal X_t^{-},
+\end{cases}
+\end{equation}
+% 中文：其中，\gamma 为对不可靠样本的抑制系数。
+% 该设计使模型能够从低偏置且高置信的样本中获得更强的正向更新信号，
+% 同时显式削弱不可靠样本对 ZOO 方向估计的干扰。
+where $\gamma\ge 0$ is a suppression coefficient for unreliable samples.
+This design strengthens the positive update signal from samples with low prediction bias and high confidence, while explicitly weakening the interference of unreliable samples on ZOO direction estimation.
+
+% 中文：但仅靠筛选后的加权熵仍然不够，因为在持续域偏移下，熵目标本身仍可能明显波动。
+% 因此我们进一步引入源锚定的分布对齐项，在表示空间中平滑目标函数。
+However, the screened and weighted entropy objective alone is still insufficient to provide stable directions for ZOO.
+Even when the current sample is regarded as relatively reliable, the entropy-minimization objective may still fluctuate substantially under continual domain shifts.
+Since ZOO estimates update directions directly from perturbed objective differences, such entropy fluctuations are further amplified into high-variance online direction estimates.
+To alleviate this issue, we further introduce a distribution-alignment constraint in the representation space, which stabilizes forward-only direction estimation by aligning the target-window statistics with source-domain reference statistics.
+
+% 中文：在适配开始之前，我们先为每个模态分支上被选中的特征层预计算源域统计量，
+% 包括该层在源域参考集上的特征均值和标准差。
+Before online adaptation starts, we pre-compute the source-domain statistics for each selected feature layer $l$ in modality branch $m\in\{a,v\}$:
+\begin{equation}
+\label{eq:source_stats}
+\mu_l^{S,m}=\frac{1}{|\mathcal D_S|}\sum_{\mathbf{x}_i\in \mathcal D_S} h_l^{m}(\mathbf{x}_i),
+\qquad
+\sigma_l^{S,m}=\sqrt{\frac{1}{|\mathcal D_S|}\sum_{\mathbf{x}_i\in \mathcal D_S}\left(h_l^{m}(\mathbf{x}_i)-\mu_l^{S,m}\right)^2},
+\end{equation}
+% 中文：其中，D_S 表示源域参考数据，h_l^m(x_i) 表示样本在模态分支 m 的第 l 层特征表示，
+% \mu_l^{S,m} 和 \sigma_l^{S,m} 分别对应该分支该层的源域均值和标准差。
+% 在测试时，我们对当前窗口同样计算各分支的目标窗口统计量，并记为 \mu_l^m(W_t) 和 \sigma_l^m(W_t)。
+where $\mathcal D_S$ is the source-domain reference set, $h_l^{m}(\mathbf{x}_i)$ denotes the feature representation of sample $\mathbf{x}_i$ at layer $l$ in branch $m$, and $\mu_l^{S,m}$ and $\sigma_l^{S,m}$ are the corresponding source-domain mean and standard deviation.
+At test time, for the current window $\mathcal W_t$, we analogously compute the target-window mean and standard deviation in each branch, denoted by $\mu_l^{m}(\mathcal W_t)$ and $\sigma_l^{m}(\mathcal W_t)$, respectively.
+
+% 中文：基于样本权重，我们进一步定义可靠性加权熵项，
+% 用于促进可靠样本并抑制不可靠样本。
+\begin{equation}
+\label{eq:weighted_entropy}
+\mathcal L_t^{\mathrm{ent}}
+=
+\!- I(\mathbf{x}_t)\sum_{c\in \mathcal C} p_c(\mathbf{x}_t)\log p_c(\mathbf{x}_t).
+\end{equation}
+% 中文：同时，我们在各个选中的 branch 上分别定义源锚定分布对齐项，
+% 用于约束目标窗口统计不要偏离源域参考统计过多。
+\begin{equation}
+\label{eq:alignment_objective}
+\mathcal L_t^{\mathrm{align},m}
+=
+\sum_{l\in \mathcal S^{m}}
+\left(
+\|\mu_l^{m}(\mathcal W_t)-\mu_l^{S,m}\|_2^2
++
+\|\sigma_l^{m}(\mathcal W_t)-\sigma_l^{S,m}\|_2^2
+\right),
+\qquad m\in\{a,v\},
+\end{equation}
+% 中文：其中，第一项通过 I(x_t) 促进可靠样本、抑制不可靠样本；
+% 第二项则在各模态 branch 上分别约束目标窗口统计与源域参考统计之间的偏差，
+% 为 ZOO 提供更平滑、低噪声的结构性引导。
+The first term promotes reliable samples and suppresses unreliable ones through $I(\mathbf{x}_t)$, while the second term constrains the deviation between target-window statistics and source-domain reference statistics in each modality branch, thereby providing a smoother and less noisy structural signal for ZOO.
+
+\subsection{Overall Optimization}
+\label{sec:overall_opt}
+
+% 中文：最后，我们将 fusion 侧的可靠性加权熵项与各模态 branch 上的源锚定分布对齐项
+% 通过系数因子 lambda 组合为整体优化目标。
+Finally, we combine Eq.~(\ref{eq:weighted_entropy}) and Eq.~(\ref{eq:alignment_objective}) with a coefficient factor $\lambda$ as the overall objective:
+\begin{equation}
+\label{eq:signal_objective}
+\mathcal L_t
+=
+\mathcal L_t^{\mathrm{ent}}
++
+\lambda \sum_{m\in\{a,v\}} \mathcal L_t^{\mathrm{align},m}.
+\end{equation}
+
+% 中文：在该目标下，fusion 侧负责提供样本可靠性信号，各模态 branch 侧负责提供对齐约束。
+% 记 Theta_br 为音频分支和视频分支中被选中的可更新参数集合之并。
+% 在整体目标之上，我们仅对 Theta_br 执行零阶更新，而保持 fusion 模块参数冻结。
+Under this objective, the fusion module provides the sample-reliability signal, while the selected layers in each modality branch contribute the source-anchored alignment regularization.
+Let $\Theta_{\mathrm{br}}=\Theta_{\mathcal S^a}^{a}\cup\Theta_{\mathcal S^v}^{v}$ denote the selected branch parameters.
+Based on the overall objective above, we perform zeroth-order updates only on $\Theta_{\mathrm{br}}$ while keeping the fusion module frozen:
+\begin{equation}
+\label{eq:zoo_update}
+\hat{\mathbf g}_t
+=
+\frac{
+\mathcal L_t(\Theta_{\mathrm{br}}+\delta\mathbf u_t)
+-
+\mathcal L_t(\Theta_{\mathrm{br}}-\delta\mathbf u_t)
+}{2\delta}\mathbf u_t,
+\qquad
+\Theta_{\mathrm{br}}
+\leftarrow
+\Theta_{\mathrm{br}}-\eta\hat{\mathbf g}_t,
+\end{equation}
+% 中文：其中，u_t 表示随机扰动方向，delta 为扰动半径，eta 为学习率。
+where $\mathbf u_t$ is a random perturbation direction, $\delta$ is the perturbation radius, and $\eta$ is the learning rate.

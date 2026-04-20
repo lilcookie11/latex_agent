@@ -6,7 +6,7 @@ This appendix provides the complete benchmark tables corresponding to the verifi
 \subsection{Complete Benchmark Tables}
 
 \begin{table}[p]
-\caption{Complete Kinetics50-C interleaved modality corruption results. Accuracy is reported in \%. Higher is better.}
+\caption{Complete Kinetics50-C interleaved single-modality corruption results. Columns labeled \texttt{V:*} indicate that the audio modality remains clean while only the video modality is corrupted, whereas columns labeled \texttt{A:*} indicate that the video modality remains clean while only the audio modality is corrupted. Accuracy is reported in \%. Higher is better.}
 \label{tab:appendix_k50_interleaved}
 \centering
 \scriptsize
@@ -15,26 +15,26 @@ This appendix provides the complete benchmark tables corresponding to the verifi
 \begin{tabular}{lcccccccccccccccccccccc}
 \toprule
 Method
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{3}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{3}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
 & Avg. \\
 \cmidrule(lr){2-3}\cmidrule(lr){4-4}\cmidrule(lr){5-6}\cmidrule(lr){7-7}
 \cmidrule(lr){8-9}\cmidrule(lr){10-10}\cmidrule(lr){11-13}\cmidrule(lr){14-14}
 \cmidrule(lr){15-16}\cmidrule(lr){17-17}\cmidrule(lr){18-19}\cmidrule(lr){20-20}
 \cmidrule(lr){21-22}
-& Gauss. & Shot & Gauss. & Impul. & Defoc. & Traff. & Glass & Mot. & Crowd.
-& Zoom & Snow & Frost & Rain & Fog & Brit. & Thund. & Contr. & Elas. & Wind & Pix. & JPEG & Avg. \\
+& V:Gauss. & V:Shot & A:Gauss. & V:Impul. & V:Defoc. & A:Traff. & V:Glass & V:Mot. & A:Crowd.
+& V:Zoom & V:Snow & V:Frost & A:Rain & V:Fog & V:Brit. & A:Thund. & V:Contr. & V:Elas. & A:Wind & V:Pix. & V:JPEG & Avg. \\
 \midrule
 \multicolumn{23}{c}{$t \longrightarrow$} \\
 \midrule
@@ -74,7 +74,7 @@ VIDA
 \end{table}
 
 \begin{table}[p]
-\caption{Complete VGGSound-C interleaved modality corruption results. Accuracy is reported in \%. Higher is better.}
+\caption{Complete VGGSound-C interleaved single-modality corruption results. Columns labeled \texttt{V:*} indicate that the audio modality remains clean while only the video modality is corrupted, whereas columns labeled \texttt{A:*} indicate that the video modality remains clean while only the audio modality is corrupted. Accuracy is reported in \%. Higher is better.}
 \label{tab:appendix_vgg_interleaved}
 \centering
 \scriptsize
@@ -83,26 +83,26 @@ VIDA
 \begin{tabular}{lcccccccccccccccccccccc}
 \toprule
 Method
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{3}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
-& \multicolumn{1}{c}{A-C}
-& \multicolumn{2}{c}{V-C}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{3}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
 & Avg. \\
 \cmidrule(lr){2-3}\cmidrule(lr){4-4}\cmidrule(lr){5-6}\cmidrule(lr){7-7}
 \cmidrule(lr){8-9}\cmidrule(lr){10-10}\cmidrule(lr){11-13}\cmidrule(lr){14-14}
 \cmidrule(lr){15-16}\cmidrule(lr){17-17}\cmidrule(lr){18-19}\cmidrule(lr){20-20}
 \cmidrule(lr){21-22}
-& Gauss. & Shot & Gauss. & Impul. & Defoc. & Traff. & Glass & Mot. & Crowd.
-& Zoom & Snow & Frost & Rain & Fog & Brit. & Thund. & Contr. & Elas. & Wind & Pix. & JPEG & Avg. \\
+& V:Gauss. & V:Shot & A:Gauss. & V:Impul. & V:Defoc. & A:Traff. & V:Glass & V:Mot. & A:Crowd.
+& V:Zoom & V:Snow & V:Frost & A:Rain & V:Fog & V:Brit. & A:Thund. & V:Contr. & V:Elas. & A:Wind & V:Pix. & V:JPEG & Avg. \\
 \midrule
 \multicolumn{23}{c}{$t \longrightarrow$} \\
 \midrule
@@ -142,7 +142,7 @@ VIDA
 \end{table}
 
 \begin{table}[p]
-\caption{Complete Kinetics50-C AV co-shift PairTrack Easy results. Accuracy is reported in \%. Higher is better.}
+\caption{Complete Kinetics50-C AV co-shift PairTrack Easy results. Accuracy is reported in \%. Higher is better. VIDA is omitted here because only the protocol-level summary is available in the synced verified backup.}
 \label{tab:appendix_k50_easy}
 \centering
 \scriptsize
@@ -172,14 +172,13 @@ REM & 31.50 & 38.50 & 35.50 & 37.00 & 38.50 & 57.00 & 68.50 & 46.50 & 41.00 & 28
 PTA & 31.00 & 34.00 & 29.50 & 39.50 & 39.00 & 59.00 & 69.50 & 48.50 & 42.50 & 26.50 & 68.00 & 42.50 & 47.50 & 61.50 & 57.00 & 46.37 \\
 BECoTTA-MoE & 31.50 & 37.50 & 34.00 & 38.00 & 39.00 & 56.50 & 69.00 & 46.50 & 41.50 & 25.50 & 66.50 & 43.50 & 46.00 & 60.00 & 61.50 & 46.43 \\
 SuMi & 32.00 & 38.00 & 34.50 & 37.50 & 40.50 & 58.50 & 66.00 & 50.50 & 44.50 & 29.00 & 66.50 & 45.50 & 51.00 & 64.00 & 62.50 & 48.03 \\
-VIDA & - & - & - & - & - & - & - & - & - & - & - & - & - & - & - & 30.75 \\
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
 \begin{table}[p]
-\caption{Complete Kinetics50-C AV co-shift PairTrack Async Hard results. Accuracy is reported in \%. Higher is better.}
+\caption{Complete Kinetics50-C AV co-shift PairTrack Async Hard results. Accuracy is reported in \%. Higher is better. VIDA is omitted here because only the protocol-level summary is available in the synced verified backup.}
 \label{tab:appendix_k50_hard}
 \centering
 \scriptsize
@@ -209,14 +208,13 @@ REM & 30.50 & 29.50 & 27.00 & 33.00 & 38.00 & 56.00 & 66.50 & 47.50 & 41.00 & 22
 PTA & 28.50 & 27.50 & 24.00 & 32.00 & 25.00 & 58.00 & 68.50 & 47.50 & 38.50 & 12.50 & 58.50 & 22.50 & 19.00 & 38.00 & 27.00 & 35.13 \\
 BECoTTA-MoE & 30.00 & 33.00 & 28.50 & 32.50 & 37.50 & 55.00 & 66.50 & 48.50 & 44.00 & 22.50 & 64.00 & 40.50 & 52.50 & 61.00 & 55.00 & 44.73 \\
 SuMi & 30.50 & 29.50 & 26.50 & 32.50 & 39.00 & 57.00 & 64.00 & 49.50 & 43.50 & 25.00 & 65.00 & 40.00 & 49.00 & 59.00 & 56.00 & 44.40 \\
-VIDA & - & - & - & - & - & - & - & - & - & - & - & - & - & - & - & 23.75 \\
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
 \begin{table}[p]
-\caption{Complete VGGSound-C AV co-shift PairTrack Easy (Full) results. Accuracy is reported in \%. Higher is better.}
+\caption{Complete VGGSound-C AV co-shift PairTrack Easy (Full) results. Accuracy is reported in \%. Higher is better. VIDA is omitted here because only the protocol-level summary is available in the synced verified backup.}
 \label{tab:appendix_vgg_easy}
 \centering
 \scriptsize
@@ -246,14 +244,13 @@ REM & 3.50 & 8.50 & 5.00 & 8.00 & 8.50 & 19.00 & 16.50 & 19.00 & 6.00 & 3.50 & 2
 PTA & 3.00 & 3.50 & 1.50 & 4.50 & 3.50 & 18.00 & 15.50 & 12.00 & 1.50 & 0.00 & 10.00 & 3.00 & 2.50 & 2.00 & 0.50 & 5.40 \\
 BECoTTA-MoE & 2.50 & 1.00 & 0.00 & 1.50 & 0.50 & 5.00 & 0.00 & 1.00 & 1.00 & 0.00 & 4.50 & 0.00 & 1.50 & 1.50 & 0.50 & 1.37 \\
 SuMi & 4.00 & 10.00 & 8.50 & 8.50 & 8.00 & 21.00 & 14.00 & 0.00 & 0.00 & 0.00 & 0.50 & 1.00 & 0.50 & 0.00 & 0.00 & 5.07 \\
-VIDA & - & - & - & - & - & - & - & - & - & - & - & - & - & - & - & 3.00 \\
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
 \begin{table}[p]
-\caption{Complete VGGSound-C AV co-shift PairTrack Async Hard (Full) results. Accuracy is reported in \%. Higher is better.}
+\caption{Complete VGGSound-C AV co-shift PairTrack Async Hard (Full) results. Accuracy is reported in \%. Higher is better. VIDA is omitted here because only the protocol-level summary is available in the synced verified backup.}
 \label{tab:appendix_vgg_hard}
 \centering
 \scriptsize
@@ -283,7 +280,6 @@ REM & 4.00 & 5.00 & 2.50 & 7.00 & 6.50 & 23.00 & 17.00 & 15.50 & 4.50 & 1.50 & 1
 PTA & 4.00 & 3.00 & 0.50 & 3.50 & 3.50 & 19.50 & 13.50 & 7.00 & 1.50 & 0.50 & 9.50 & 2.50 & 2.00 & 2.00 & 0.50 & 4.87 \\
 BECoTTA-MoE & 1.00 & 1.00 & 0.00 & 6.50 & 6.50 & 22.00 & 17.00 & 15.00 & 5.00 & 4.00 & 23.50 & 8.00 & 1.00 & 2.00 & 0.50 & 7.53 \\
 SuMi & 4.50 & 8.50 & 5.50 & 0.00 & 1.00 & 0.50 & 0.50 & 0.00 & 0.00 & 0.00 & 0.50 & 1.00 & 0.50 & 0.00 & 0.00 & 1.50 \\
-VIDA & - & - & - & - & - & - & - & - & - & - & - & - & - & - & - & 3.50 \\
 \bottomrule
 \end{tabular}%
 }
