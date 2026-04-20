@@ -8,7 +8,7 @@ $f_{\Theta}=\{f^{a}_{\Theta_a}, f^{v}_{\Theta_v}, f^{u}_{\Theta_u}, f^{c}_{\Thet
 where $f^{a}_{\Theta_a}$ and $f^{v}_{\Theta_v}$ are modality-specific encoders for audio and video inputs, respectively, $f^{u}_{\Theta_u}$ denotes the multimodal fusion module, and $f^{c}_{\Theta_c}$ is the classification head.
 The model is first trained on a labeled source domain
 $\mathcal{D}_s=\{(\mathbf{x}^{a}_i,\mathbf{x}^{v}_i,y_i)\}_{i=1}^{N_s}\sim P_s(\mathbf{x},y)$,
-where each sample consists of paired audio $\mathbf{x}^{a}_i$ and video $\mathbf{x}^{v}_i$. During deployment, the source data and target labels are unavailable.
+where each sample consists of paired audio $\mathbf{x}^{a}_i$ and video $\mathbf{x}^{v}_i$.
 The model receives an unlabeled target stream
 $\mathcal{D}_t=\{(\mathbf{x}^{a}_t,\mathbf{x}^{v}_t)\}_{t=1}^{T}$,
 where each sample is drawn sequentially from a non-stationary target distribution $Q_t(\mathbf{x})$.
@@ -76,12 +76,13 @@ A higher purity score indicates that the layer still preserves stronger domain-s
 Conversely, a lower purity score implies that the layer is already more domain-invariant, so further updating it is less beneficial.
 % 中文：基于上述层敏感度度量，我们进一步为每个模态分支选择聚类纯度最高的层用于后续 ZOO 更新。
 % 对于分支 m，可调层集合定义为 TopK(P_l^m)；在后续适配过程中，
-% 我们仅对集合 S 中对应的规范化层执行在线更新，而将其余参数保持冻结。
+% 我们记这些层对应的可更新规范化参数为 Theta_{S^m}^m，并仅对这些参数执行在线更新，而将其余参数保持冻结。
 % 通过这种方式，模型能够显著降低 ZOO 的有效优化维度，提高方向估计的稳定性与收敛速度，
 % 同时使有限的在线更新预算集中作用于真正 shift-sensitive 的关键层上。
-Based on this layer-sensitivity metric, we select the layers with the highest clustering purity in each modality branch for subsequent ZOO updates:$
-\mathcal S^{m}=\mathrm{TopK}\{P_l^{m}\}_{l=1}^{L_m}, m\in\{a,v\}$, where $L_m$ is the number of candidate layers in branch $m$.
-During online adaptation, we update only the normalization layers indexed by $\mathcal S^{a}$ and $\mathcal S^{v}$, while freezing all remaining parameters.
+Based on this layer-sensitivity metric, we select the layers with the highest clustering purity in each modality branch for subsequent ZOO updates:
+$\mathcal S^{m}=\mathrm{TopK}\{P_l^{m}\}_{l=1}^{L_m}, m\in\{a,v\}$, where $L_m$ is the number of candidate layers in branch $m$.
+We denote the corresponding updatable normalization parameters by $\Theta_{\mathcal S^m}^{m}$.
+During online adaptation, we update only $\Theta_{\mathcal S^a}^{a}$ and $\Theta_{\mathcal S^v}^{v}$, while freezing all remaining parameters.
 This design substantially reduces the effective optimization dimension of ZOO, improves the stability and convergence speed of direction estimation, and concentrates the limited online update budget on genuinely shift-sensitive layers.
 
 
@@ -167,14 +168,14 @@ To alleviate this issue, we further introduce a distribution-alignment constrain
 Before online adaptation starts, we pre-compute the source-domain statistics for each selected feature layer $l$ in modality branch $m\in\{a,v\}$:
 \begin{equation}
 \label{eq:source_stats}
-\mu_l^{S,m}=\frac{1}{|\mathcal D_S|}\sum_{\mathbf{x}_i\in \mathcal D_S} h_l^{m}(\mathbf{x}_i),
+\mu_l^{S,m}=\frac{1}{|\mathcal D_s|}\sum_{\mathbf{x}_i\in \mathcal D_s} h_l^{m}(\mathbf{x}_i),
 \qquad
-\sigma_l^{S,m}=\sqrt{\frac{1}{|\mathcal D_S|}\sum_{\mathbf{x}_i\in \mathcal D_S}\left(h_l^{m}(\mathbf{x}_i)-\mu_l^{S,m}\right)^2},
+\sigma_l^{S,m}=\sqrt{\frac{1}{|\mathcal D_s|}\sum_{\mathbf{x}_i\in \mathcal D_s}\left(h_l^{m}(\mathbf{x}_i)-\mu_l^{S,m}\right)^2},
 \end{equation}
-% 中文：其中，D_S 表示源域参考数据，h_l^m(x_i) 表示样本在模态分支 m 的第 l 层特征表示，
+% 中文：其中，D_s 表示源域参考数据，h_l^m(x_i) 表示样本在模态分支 m 的第 l 层特征表示，
 % \mu_l^{S,m} 和 \sigma_l^{S,m} 分别对应该分支该层的源域均值和标准差。
 % 在测试时，我们对当前窗口同样计算各分支的目标窗口统计量，并记为 \mu_l^m(W_t) 和 \sigma_l^m(W_t)。
-where $\mathcal D_S$ is the source-domain reference set, $h_l^{m}(\mathbf{x}_i)$ denotes the feature representation of sample $\mathbf{x}_i$ at layer $l$ in branch $m$, and $\mu_l^{S,m}$ and $\sigma_l^{S,m}$ are the corresponding source-domain mean and standard deviation.
+where $\mathcal D_s$ is the source-domain reference set, $h_l^{m}(\mathbf{x}_i)$ denotes the feature representation of sample $\mathbf{x}_i$ at layer $l$ in branch $m$, and $\mu_l^{S,m}$ and $\sigma_l^{S,m}$ are the corresponding source-domain mean and standard deviation.
 At test time, for the current window $\mathcal W_t$, we analogously compute the target-window mean and standard deviation in each branch, denoted by $\mu_l^{m}(\mathcal W_t)$ and $\sigma_l^{m}(\mathcal W_t)$, respectively.
 
 % 中文：基于样本权重，我们进一步定义可靠性加权熵项，
