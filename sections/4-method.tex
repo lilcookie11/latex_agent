@@ -242,3 +242,35 @@ Based on the overall objective above, we perform zeroth-order updates only on $\
 \end{equation}
 % 中文：其中，u_t 表示随机扰动方向，delta 为扰动半径，eta 为学习率。
 where $\mathbf u_t$ is a random perturbation direction, $\delta$ is the perturbation radius, and $\eta$ is the learning rate.
+% 中文：算法 1 总结了 ZOSA 从离线初始化到在线流式适配的完整流程。
+Algorithm~\ref{alg:zosa} summarizes the complete offline-to-online procedure of ZOSA.
+
+\begin{algorithm}[t]
+\caption{ZOSA Online Adaptation}
+\label{alg:zosa}
+\small
+\begin{algorithmic}[1]
+\REQUIRE Pretrained model $f_{\Theta}$, source reference set $\mathcal D_s$, target stream $\mathcal D_t=\{\mathbf{x}_t\}_{t=1}^{T}$, window length $W$, selected-layer number $K$, loss weight $\lambda$, learning rate $\eta$, perturbation radius $\delta$
+\ENSURE Adapted branch parameters $\Theta_{\mathrm{br}}$
+\STATE Sample small ID/OOD reference subsets for layer-sensitivity evaluation
+\FOR{each modality branch $m\in\{a,v\}$}
+    \STATE Compute layer purity $P_l^m$ and select $\mathcal S^m=\mathrm{TopK}\{P_l^m\}_{l=1}^{L_m}$
+    \STATE Define the corresponding updatable parameters $\Theta_{\mathcal S^m}^{m}$
+    \STATE Compute source statistics $\{\mu_l^{S,m},\sigma_l^{S,m}\}_{l\in\mathcal S^m}$ from $\mathcal D_s$
+\ENDFOR
+\STATE Set $\Theta_{\mathrm{br}}=\Theta_{\mathcal S^a}^{a}\cup\Theta_{\mathcal S^v}^{v}$ and initialize $\mathcal W_0\leftarrow\emptyset$
+\FOR{$t=1$ to $T$}
+    \STATE Receive current test sample $\mathbf{x}_t$ and compute fusion prediction $p(\mathbf{x}_t)$
+    \STATE Update the local history window $\mathcal W_t$
+    \STATE Compute $B(\mathbf{x}_t)$, $C(\mathbf{x}_t)$, and the reliability indicator $I(\mathbf{x}_t)$
+    \STATE Compute the fusion-side loss $\mathcal L_t^{\mathrm{ent}}$ by Eq.~(\ref{eq:weighted_entropy})
+    \FOR{each modality branch $m\in\{a,v\}$}
+        \STATE Compute target-window statistics $\mu_l^{m}(\mathcal W_t),\sigma_l^{m}(\mathcal W_t)$ for $l\in\mathcal S^m$
+        \STATE Compute the branch-side loss $\mathcal L_t^{\mathrm{align},m}$ by Eq.~(\ref{eq:alignment_objective})
+    \ENDFOR
+    \STATE Form $\mathcal L_t=\mathcal L_t^{\mathrm{ent}}+\lambda\sum_{m\in\{a,v\}}\mathcal L_t^{\mathrm{align},m}$
+    \STATE Sample perturbation direction $\mathbf u_t$, estimate $\hat{\mathbf g}_t$ by Eq.~(\ref{eq:zoo_update}), and update $\Theta_{\mathrm{br}}$
+\ENDFOR
+\STATE \textbf{return} $\Theta_{\mathrm{br}}$
+\end{algorithmic}
+\end{algorithm}
