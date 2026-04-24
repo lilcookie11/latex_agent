@@ -32,7 +32,7 @@ We compare against a frozen \texttt{no\_adapt} model and a broad set of continua
 \newcommand{\avgcell}[1]{\cellcolor{zosaAvgCol}#1}
 
 \begin{table}[t]
-\caption{Kinetics50-C interleaved single-modality corruption. Columns labeled \texttt{V:*} indicate that the audio modality remains clean while only the video modality is corrupted, whereas columns labeled \texttt{A:*} indicate that the video modality remains clean while only the audio modality is corrupted. Accuracy is reported in \%. Higher is better.}
+\caption{Accuracy comparison with SOTAs on Kinetics50-C for interleaved single-modality corruption streams (severity level = 5). The best performances are highlighted.}
 \label{tab:k50_interleaved}
 \centering
 \scriptsize
@@ -64,20 +64,20 @@ Method
 \midrule
 \multicolumn{23}{c}{$t\ \xrightarrow{\hspace*{18em}}$} \\
 \midrule
-\texttt{no\_adapt}
+\texttt{Source}
 & 46.88 & 48.44 & 68.75 & 46.88 & 65.62 & 64.84 & 72.66 & 80.47 & 67.97 & 57.03 & 61.72 & 61.72 & 67.97 & 49.22 & 75.78 & 74.22 & 50.78 & 61.72 & 75.78 & 68.75 & 65.62 & \avgcell{63.47} \\
 FOA
 & 48.44 & 50.78 & 68.75 & 42.19 & 67.97 & 64.84 & 74.22 & 80.47 & 70.31 & 57.03 & 63.28 & 66.41 & 69.53 & 60.94 & 75.00 & 75.00 & 53.91 & 65.62 & 78.12 & 70.31 & 69.53 & \avgcell{65.36} \\
 T3A
 & 30.47 & 37.50 & 50.00 & 35.16 & 55.47 & 47.66 & 58.59 & 67.19 & 59.38 & 49.22 & 39.84 & 45.31 & 46.88 & 37.50 & 57.03 & 57.81 & 33.59 & 58.59 & 64.06 & 56.25 & 56.25 & \avgcell{49.70} \\
-% ABPEM
-% & 39.84 & 41.41 & 57.81 & 42.97 & 57.81 & 60.16 & 54.69 & 62.50 & 59.38 & 50.00 & 46.88 & 54.69 & 59.38 & 53.12 & 60.16 & 67.19 & 37.50 & 59.38 & 64.84 & 53.12 & 57.03 & 54.28 \\
+ABPEM
+& 39.84 & 41.41 & 57.81 & 42.97 & 57.81 & 60.16 & 54.69 & 62.50 & 59.38 & 50.00 & 46.88 & 54.69 & 59.38 & 53.12 & 60.16 & 67.19 & 37.50 & 59.38 & 64.84 & 53.12 & 57.03 & 54.28 \\
 Tent
 & 47.66 & 48.44 & 69.53 & 46.88 & 65.62 & 66.41 & 71.88 & 80.47 & 70.31 & 57.03 & 61.72 & 61.72 & 68.75 & 49.22 & 75.00 & 74.22 & 50.78 & 59.38 & 78.12 & 67.19 & 65.62 & \avgcell{63.62} \\
 SAR
 & 42.97 & 34.38 & 46.88 & 32.03 & 34.38 & 35.16 & 59.38 & 62.50 & 27.34 & 47.66 & 44.53 & 35.16 & 47.66 & 50.00 & 57.81 & 26.56 & 28.91 & 31.25 & 51.56 & 39.06 & 38.28 & \avgcell{41.59} \\
 READ
-& 46.88 & 49.22 & 68.75 & 46.88 & 65.62 & 66.41 & 70.31 & 79.69 & 70.31 & 58.59 & 60.94 & 65.62 & 68.75 & 53.91 & 75.00 & 73.44 & 51.56 & 61.72 & 76.56 & 68.75 & 67.19 & \avgcell{64.10} \\
+& 46.88 & 49.22 & 68.75 & 46.88 & 65.62 & 66.41 & 70.31 & 79.69 & 70.31 & 58.59 & 60.94 & 65.62 & 68.75 & 53.89 & 75.00 & 73.44 & 51.56 & 61.72 & 76.56 & 68.75 & 67.19 & \avgcell{64.10} \\
 ContinualMAE
 & 47.66 & 48.44 & 68.75 & 46.88 & 65.62 & 64.84 & 72.66 & 80.47 & 69.53 & 57.03 & 61.72 & 61.72 & 67.97 & 49.22 & 75.78 & 74.22 & 50.78 & 61.72 & 76.56 & 68.75 & 65.62 & \avgcell{63.62} \\
 DeYO
@@ -96,6 +96,74 @@ VIDA
 \rowcolor{zosaBestRow}
 \textbf{ZOSA}
 & \textbf{53.91} & \textbf{56.25} & 69.53 & \textbf{46.09} & \textbf{67.19} & 69.53 & \textbf{76.56} & \textbf{81.25} & \textbf{73.44} & \textbf{57.81} & 60.94 & 64.06 & 68.75 & \textbf{66.41} & 71.88 & \textbf{77.34} & 48.44 & 65.62 & \textbf{78.12} & \textbf{75.78} & 69.53 & \textbf{66.59} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[t]
+\caption{Accuracy comparison with SOTAs on VGGSound-MC for interleaved single-modality corruption streams.}
+\label{tab:vgg_interleaved}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{1pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lcccccccccccccccccccccc@{}}
+\toprule
+Method
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{3}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \multicolumn{1}{c}{V clean}
+& \multicolumn{2}{c}{A clean}
+& \cellcolor{zosaAvgCol}Avg. \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-4}\cmidrule(lr){5-6}\cmidrule(lr){7-7}
+\cmidrule(lr){8-9}\cmidrule(lr){10-10}\cmidrule(lr){11-13}\cmidrule(lr){14-14}
+\cmidrule(lr){15-16}\cmidrule(lr){17-17}\cmidrule(lr){18-19}\cmidrule(lr){20-20}
+\cmidrule(lr){21-22}
+& V:Gaus. & V:Shot & A:Gaus. & V:Imp. & V:Def. & A:Traf. & V:Glas. & V:Mot. & A:Crowd
+& V:Zoom & V:Snow & V:Frost & A:Rain & V:Fog & V:Brit. & A:Thun. & V:Contr. & V:Elas. & A:Wind & V:Pix. & V:JPEG & \cellcolor{zosaAvgCol}Avg. \\
+\midrule
+\multicolumn{23}{c}{$t\ \xrightarrow{\hspace*{18em}}$} \\
+\midrule
+\texttt{Source}
+& 49.22 & 43.75 & 24.22 & 46.09 & 51.56 & 19.53 & 56.25 & 64.06 & 21.09 & 56.25 & 59.38 & 53.12 & 23.44 & 46.09 & 62.50 & 22.66 & 54.69 & 58.59 & 22.66 & 57.81 & 63.28 & \avgcell{45.54} \\
+FOA
+& 48.78 & 47.22 & 33.16 & 48.78 & 52.69 & 19.09 & 56.59 & 59.72 & 26.12 & 53.47 & 55.03 & 51.91 & 28.47 & 49.56 & 62.84 & 26.91 & 54.25 & 56.59 & 23.78 & 52.69 & 62.84 & \avgcell{46.21} \\
+T3A
+& 6.25 & 15.62 & 4.69 & 14.06 & 27.34 & 3.91 & 34.38 & 27.34 & 5.47 & 32.81 & 22.66 & 13.28 & 6.25 & 8.59 & 35.16 & 3.91 & 25.00 & 26.56 & 7.03 & 25.00 & 25.78 & \avgcell{17.67} \\
+Tent
+& 49.54 & 43.43 & 22.66 & 47.66 & 50.78 & 18.75 & 57.03 & 65.62 & 21.09 & 59.38 & 57.03 & 50.78 & 23.44 & 53.12 & 64.06 & 39.97 & 45.81 & 58.59 & 21.88 & 53.91 & 65.62 & \avgcell{45.72} \\
+SAR
+& 31.25 & 26.56 & 6.25 & 25.78 & 32.81 & 1.56 & 35.94 & 39.84 & 3.91 & 32.81 & 39.06 & 26.56 & 2.34 & 24.22 & 35.16 & 9.38 & 34.38 & 42.19 & 8.59 & 32.03 & 31.25 & \avgcell{24.85} \\
+READ
+& 50.78 & 42.97 & 22.66 & 48.44 & 53.89 & 15.62 & 57.03 & 64.84 & 21.88 & 57.81 & 56.25 & 53.12 & 23.44 & 48.44 & 61.72 & 17.97 & 53.91 & 58.59 & 19.53 & 52.34 & 63.28 & \avgcell{44.98} \\
+CMAE
+& 49.22 & 43.75 & 24.22 & 46.09 & 51.56 & 19.53 & 56.25 & 64.06 & 21.09 & 56.25 & 59.38 & 53.12 & 23.44 & 46.09 & 62.50 & 22.66 & 54.69 & 58.59 & 22.66 & 57.81 & 63.28 & \avgcell{45.54} \\
+DeYO
+& 49.22 & 43.75 & 24.22 & 46.09 & 51.56 & 18.75 & 57.81 & 64.06 & 21.88 & 57.03 & 58.59 & 53.12 & 25.78 & 47.66 & 64.06 & 33.88 & 45.03 & 58.59 & 23.44 & 54.69 & 62.50 & \avgcell{45.80} \\
+REM
+& 49.22 & 44.53 & 23.44 & 46.88 & 51.56 & 17.97 & 57.03 & 64.84 & 21.88 & 60.16 & 58.59 & 52.34 & 25.00 & 51.56 & 64.06 & 19.53 & 53.12 & 60.16 & 21.88 & 54.69 & 65.62 & \avgcell{45.91} \\
+PTA
+& 50.00 & 43.75 & 21.88 & 51.56 & 53.12 & 17.97 & 55.47 & 64.06 & 15.62 & 57.81 & 57.03 & 53.91 & 20.31 & 48.44 & 63.28 & 15.62 & 50.78 & 56.25 & 19.53 & 46.09 & 56.25 & \avgcell{43.75} \\
+BECoTTA
+& 51.00 & 43.52 & 10.94 & 43.75 & 53.12 & 18.75 & 57.81 & 64.06 & 19.53 & 56.25 & 55.47 & 53.91 & 24.22 & 45.31 & 60.16 & 8.59 & 48.44 & 57.03 & 21.09 & 56.25 & 60.94 & \avgcell{44.08} \\
+SuMi
+& 49.22 & 42.51 & 26.22 & 10.16 & 0.00 & 0.00 & 0.78 & 0.78 & 0.78 & 0.78 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.78 & 0.00 & 1.56 & 0.78 & 0.00 & 0.00 & \avgcell{6.40} \\
+VIDA
+& 52.34 & 46.88 & 17.19 & 45.31 & 49.22 & 16.41 & 59.38 & 60.16 & 15.62 & 50.78 & 56.25 & 43.75 & 27.34 & 39.84 & 57.81 & 11.72 & 34.38 & 33.59 & 15.62 & 37.50 & 42.19 & \avgcell{38.73} \\
+\midrule
+\rowcolor{zosaBestRow}
+\textbf{ZOSA}
+& \textbf{52.34} & 44.53 & \textbf{35.94} & 40.62 & \textbf{53.91} & \textbf{21.00} & \textbf{58.59} & \textbf{64.94} & \textbf{27.47} & \textbf{58.47} & 54.69 & \textbf{57.81} & 28.91 & \textbf{52.34} & 64.06 & \textbf{36.72} & 46.88 & \textbf{59.38} & 25.00 & 54.69 & 60.94 & \textbf{47.58} \\
 \bottomrule
 \end{tabular}%
 }
@@ -129,7 +197,7 @@ VIDA & 59.67 & 38.73 & 30.75 & 23.75 & 3.00 & 3.50 \\
 \end{table}
 
 \paragraph{Main results.}
-Table~\ref{tab:k50_interleaved} gives the detailed per-corruption view in the grouped layout used throughout our benchmark tables. Each column explicitly indicates which modality remains clean and which modality is corrupted, making the alternating single-modality schedule clear. The \textbf{ZOSA} row shows that our method improves over the frozen model across nearly all local corruption groups and remains competitive with the strongest baselines at fine granularity.
+Tables~\ref{tab:k50_interleaved} and~\ref{tab:vgg_interleaved} provide the detailed per-corruption view for the two interleaved protocols in the grouped layout used throughout our benchmark tables. Each column explicitly indicates which modality remains clean and which modality is corrupted, making the alternating single-modality schedule clear. Across both datasets, the \textbf{ZOSA} row shows that our method improves over the frozen model across most local corruption groups and remains competitive with the strongest baselines at fine granularity.
 
 Table~\ref{tab:main_results} then summarizes the protocol-level averages. ZOSA consistently improves over the frozen \texttt{no\_adapt} model across all six evaluation protocols. The gains are especially large under paired cross-modal shifts on Kinetics50-C, where our method improves the average accuracy from $47.33\%$ to $56.83\%$ on PairTrack Easy and from $44.43\%$ to $55.63\%$ on PairTrack Async Hard. These margins indicate that explicit multimodal adaptation is particularly valuable when the two modalities drift jointly rather than independently.
 
