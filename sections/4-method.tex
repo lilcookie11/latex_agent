@@ -13,10 +13,11 @@ The model receives an unlabeled target stream
 $\mathcal{D}_t=\{(\mathbf{x}^{a}_t,\mathbf{x}^{v}_t)\}_{t=1}^{T}$,
 where each sample is drawn sequentially from a non-stationary target distribution $Q_t(\mathbf{x})$.
 The target distribution may change over time and may corrupt different modalities with different severity.
-At each time step, MM-CTTA allows the model to adapt online using only the current test sample and lightweight historical statistics accumulated from the stream.
+
+Existing MM-CTTA methods largely rely on backpropagation and batch-level statistics for online adaptation, making them difficult to directly apply to lightweight edge-deployment scenarios. To address this issue, we propose a novel Selective Zeroth-Order Adaptation (SZOA) method. As shown in Fig. X, SZOA consists of two components: Shift-Sensitive Layer Selection (SSLS) and Reliability-Calibrated Learning Signal Construction (RCLS). SSLS selects shift-sensitive normalization layers to reduce the ZOO search space, while RCLS calibrates the online learning signal through reliable sample selection and distribution alignment, thereby stabilizing the forward-only update direction.
 
 
-\subsection{Shift-Sensitive Layer Selection}
+\subsection{Shift-Sensitive Layer Selection (SSLS)}
 \label{sec:layer_select}
 
 % 中文：尽管 ZOO 能够以较高的内存效率摆脱反向传播进行在线更新，
@@ -86,8 +87,8 @@ During online adaptation, we update only $\Theta_{\mathcal S^a}^{a}$ and $\Theta
 This design substantially reduces the effective optimization dimension of ZOO, improves the stability and convergence speed of direction estimation, and concentrates the limited online update budget on genuinely shift-sensitive layers.
 
 
-\subsection{Reliability-Calibrated Learning Signal Construction}
-\label{sec:rsls}
+\subsection{Reliability-Calibrated Learning Signal Construction (RCLS)}
+\label{sec:rcls}
 
 % 中文：在将 ZOO 的更新限制在选定的 shift-sensitive 层之后，仍然存在一个关键问题：
 % 其更新方向既容易受到不可靠样本的扰动，又难以仅依赖熵驱动目标保持稳定。
@@ -242,12 +243,12 @@ Based on the overall objective above, we perform zeroth-order updates only on $\
 \end{equation}
 % 中文：其中，u_t 表示随机扰动方向，delta 为扰动半径，eta 为学习率。
 where $\mathbf u_t$ is a random perturbation direction, $\delta$ is the perturbation radius, and $\eta$ is the learning rate.
-% 中文：算法 1 总结了 ZOSA 从离线初始化到在线流式适配的完整流程。
-Algorithm~\ref{alg:zosa} summarizes the complete offline-to-online procedure of ZOSA.
+% 中文：算法 1 总结了 SZOA 从离线初始化到在线流式适配的完整流程。
+Algorithm~\ref{alg:szoa} summarizes the complete offline-to-online procedure of SZOA.
 
 \begin{algorithm}[t]
-\caption{ZOSA Online Adaptation}
-\label{alg:zosa}
+\caption{SZOA Online Adaptation}
+\label{alg:szoa}
 \small
 \begin{algorithmic}[1]
 \REQUIRE Pretrained model $f_{\Theta}$, source reference set $\mathcal D_s$, target stream $\mathcal D_t=\{\mathbf{x}_t\}_{t=1}^{T}$, window length $W$, selected-layer number $K$, loss weight $\lambda$, learning rate $\eta$, perturbation radius $\delta$

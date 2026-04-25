@@ -9,7 +9,7 @@ Following prior multimodal TTA settings, we apply 15 corruptions to the video mo
 Detailed construction procedures and protocol descriptions are provided in the appendix.
 
 \paragraph{Baselines.}
-We compare ZOSA with representative CTTA methods, including Tent, SAR, READ, ContinualMAE, DeYO, and REM, as well as multimodal adaptation methods including PTA, BECoTTA-MoE, SuMi, and VIDA.
+We compare SZOA with representative CTTA methods, including Tent, SAR, READ, ContinualMAE, DeYO, and REM, as well as multimodal adaptation methods including PTA, BECoTTA-MoE, SuMi, and VIDA.
 We further include backpropagation-free methods, FOA and T3A.
 All baselines are evaluated under the same data streams and protocols, with detailed settings provided in the appendix.
 
@@ -27,9 +27,9 @@ We report the average accuracy, with additional implementation details and hyper
 \subsection{Comparision with SOTAs}
 We compare against a frozen \texttt{no\_adapt} model and a broad set of continual test-time adaptation baselines, including FOA, T3A, Tent, SAR, READ, ContinualMAE, DeYO, REM, PTA, BECoTTA-MoE, SuMi, and VIDA. Some methods have incomplete verified exports in a subset of co-shift settings. When only protocol-level summaries are verified, we keep the aggregate result in the cross-protocol summary table but omit unverified detailed rows from protocol-specific tables.
 
-\definecolor{zosaBestRow}{HTML}{F8E1CF}
-\definecolor{zosaAvgCol}{HTML}{ECEAF8}
-\newcommand{\avgcell}[1]{\cellcolor{zosaAvgCol}#1}
+\definecolor{szoaBestRow}{HTML}{F8E1CF}
+\definecolor{szoaAvgCol}{HTML}{ECEAF8}
+\newcommand{\avgcell}[1]{\cellcolor{szoaAvgCol}#1}
 
 \begin{table}[t]
 \caption{Accuracy comparison with SOTAs on Kinetics50-C for interleaved single-modality corruption streams (severity level = 5). The best performances are highlighted.}
@@ -54,13 +54,13 @@ Method
 & \multicolumn{2}{c}{A clean}
 & \multicolumn{1}{c}{V clean}
 & \multicolumn{2}{c}{A clean}
-& \cellcolor{zosaAvgCol}Avg. \\
+& \cellcolor{szoaAvgCol}Avg. \\
 \cmidrule(lr){2-3}\cmidrule(lr){4-4}\cmidrule(lr){5-6}\cmidrule(lr){7-7}
 \cmidrule(lr){8-9}\cmidrule(lr){10-10}\cmidrule(lr){11-13}\cmidrule(lr){14-14}
 \cmidrule(lr){15-16}\cmidrule(lr){17-17}\cmidrule(lr){18-19}\cmidrule(lr){20-20}
 \cmidrule(lr){21-22}
 & V:Gaus. & V:Shot & A:Gaus. & V:Imp. & V:Def. & A:Traf. & V:Glas. & V:Mot. & A:Crowd
-& V:Zoom & V:Snow & V:Frost & A:Rain & V:Fog & V:Brit. & A:Thun. & V:Contr. & V:Elas. & A:Wind & V:Pix. & V:JPEG & \cellcolor{zosaAvgCol}Avg. \\
+& V:Zoom & V:Snow & V:Frost & A:Rain & V:Fog & V:Brit. & A:Thun. & V:Contr. & V:Elas. & A:Wind & V:Pix. & V:JPEG & \cellcolor{szoaAvgCol}Avg. \\
 \midrule
 \multicolumn{23}{c}{$t\ \xrightarrow{\hspace*{18em}}$} \\
 \midrule
@@ -93,8 +93,8 @@ SuMi
 VIDA
 & 47.66 & 48.44 & 69.53 & 42.97 & 58.59 & 63.28 & 60.16 & 70.31 & 58.59 & 48.44 & 53.91 & 65.62 & 68.75 & 36.72 & 71.09 & 72.66 & 48.44 & 58.59 & 75.78 & 69.53 & 64.06 & \avgcell{59.67} \\
 \midrule
-\rowcolor{zosaBestRow}
-\textbf{ZOSA}
+\rowcolor{szoaBestRow}
+\textbf{SZOA}
 & \textbf{53.91} & \textbf{56.25} & \textbf{69.53}  & \textbf{46.09} & \textbf{67.19} & \textbf{69.53}  & \textbf{74.56} & \textbf{81.25} & \textbf{71.44} & \textbf{58.81} & \textbf{62.94} & \textbf{66.06}  & \textbf{68.75}  & \textbf{66.41} & \textbf{75.88}  & \textbf{75.34} & \textbf{48.44}  & \textbf{65.62}  & \textbf{78.12} & \textbf{72.78} & \textbf{70.53}  & \textbf{66.59} \\
 \bottomrule
 \end{tabular}%
@@ -124,13 +124,13 @@ Method
 & \multicolumn{2}{c}{A clean}
 & \multicolumn{1}{c}{V clean}
 & \multicolumn{2}{c}{A clean}
-& \cellcolor{zosaAvgCol}Avg. \\
+& \cellcolor{szoaAvgCol}Avg. \\
 \cmidrule(lr){2-3}\cmidrule(lr){4-4}\cmidrule(lr){5-6}\cmidrule(lr){7-7}
 \cmidrule(lr){8-9}\cmidrule(lr){10-10}\cmidrule(lr){11-13}\cmidrule(lr){14-14}
 \cmidrule(lr){15-16}\cmidrule(lr){17-17}\cmidrule(lr){18-19}\cmidrule(lr){20-20}
 \cmidrule(lr){21-22}
 & V:Gaus. & V:Shot & A:Gaus. & V:Imp. & V:Def. & A:Traf. & V:Glas. & V:Mot. & A:Crowd
-& V:Zoom & V:Snow & V:Frost & A:Rain & V:Fog & V:Brit. & A:Thun. & V:Contr. & V:Elas. & A:Wind & V:Pix. & V:JPEG & \cellcolor{zosaAvgCol}Avg. \\
+& V:Zoom & V:Snow & V:Frost & A:Rain & V:Fog & V:Brit. & A:Thun. & V:Contr. & V:Elas. & A:Wind & V:Pix. & V:JPEG & \cellcolor{szoaAvgCol}Avg. \\
 \midrule
 \multicolumn{23}{c}{$t\ \xrightarrow{\hspace*{18em}}$} \\
 \midrule
@@ -161,8 +161,8 @@ SuMi
 VIDA
 & 52.34 & 43.78 & 20.29 & 45.31 & 49.22 & 16.41 & 59.38 & 60.16 & 15.62 & 50.78 & 56.25 & 43.75 & 27.34 & 39.84 & 57.81 & 11.72 & 34.38 & 33.59 & 15.62 & 37.50 & 42.19 & \avgcell{38.73} \\
 \midrule
-\rowcolor{zosaBestRow}
-\textbf{ZOSA}
+\rowcolor{szoaBestRow}
+\textbf{SZOA}
 & \textbf{51.34} & \textbf{44.53} & \textbf{25.94} & \textbf{49.62} & \textbf{53.91} & \textbf{21.00} & \textbf{58.59} & \textbf{64.94} & \textbf{23.47} & \textbf{58.47} & \textbf{58.69} & \textbf{57.81} & \textbf{27.91} & \textbf{52.34} & \textbf{64.06} & \textbf{36.72} & \textbf{46.88} & \textbf{59.38} & \textbf{24.00} & \textbf{55.69} & \textbf{63.94} & \textbf{47.58} \\
 \bottomrule
 \end{tabular}%
@@ -185,14 +185,14 @@ Method
 & \multicolumn{2}{c}{A:Rain}
 & \multicolumn{3}{c}{A:Thun.}
 & \multicolumn{2}{c}{A:Wind}
-& \cellcolor{zosaAvgCol}Avg. \\
+& \cellcolor{szoaAvgCol}Avg. \\
 \cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-9}\cmidrule(lr){10-11}\cmidrule(lr){12-14}\cmidrule(lr){15-16}
 & V:Gaus. & V:Shot & V:Imp.
 & V:Def. & V:Glas.
 & V:Mot. & V:Zoom & V:Snow
 & V:Frost & V:Fog
 & V:Brit. & V:Contr. & V:Elas.
-& V:Pix. & V:JPEG & \cellcolor{zosaAvgCol}Avg. \\
+& V:Pix. & V:JPEG & \cellcolor{szoaAvgCol}Avg. \\
 \midrule
 \multicolumn{17}{c}{$t\ \xrightarrow{\hspace*{12em}}$} \\
 \multicolumn{17}{c}{\scriptsize Severity schedule within each pair: $A=[3,4,5,4,3],\ V=[4,5,4,3,5]$} \\
@@ -222,8 +222,8 @@ BECoTTA
 SuMi
 & 30.50 & 29.50 & 26.50 & 32.50 & 39.00 & 57.00 & 64.00 & 49.50 & 43.50 & 25.00 & 65.00 & 40.00 & 49.00 & 59.00 & 56.00 & \avgcell{44.40} \\
 \midrule
-\rowcolor{zosaBestRow}
-\textbf{ZOSA}
+\rowcolor{szoaBestRow}
+\textbf{SZOA}
 & \textbf{36.50} & \textbf{44.50} & \textbf{34.50} & \textbf{48.50} & \textbf{51.50} & \textbf{64.00} & \textbf{70.00} & \textbf{58.50} & \textbf{57.50} & \textbf{48.50} & \textbf{73.50} & \textbf{59.00} & \textbf{63.00} & \textbf{64.00} & \textbf{61.00} & \textbf{55.63} \\
 \bottomrule
 \end{tabular}%
@@ -246,14 +246,14 @@ Method
 & \multicolumn{2}{c}{A:Rain}
 & \multicolumn{3}{c}{A:Thun.}
 & \multicolumn{2}{c}{A:Wind}
-& \cellcolor{zosaAvgCol}Avg. \\
+& \cellcolor{szoaAvgCol}Avg. \\
 \cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-9}\cmidrule(lr){10-11}\cmidrule(lr){12-14}\cmidrule(lr){15-16}
 & V:Gaus. & V:Shot & V:Imp.
 & V:Def. & V:Glas.
 & V:Mot. & V:Zoom & V:Snow
 & V:Frost & V:Fog
 & V:Brit. & V:Contr. & V:Elas.
-& V:Pix. & V:JPEG & \cellcolor{zosaAvgCol}Avg. \\
+& V:Pix. & V:JPEG & \cellcolor{szoaAvgCol}Avg. \\
 \midrule
 \multicolumn{17}{c}{$t\ \xrightarrow{\hspace*{12em}}$} \\
 \multicolumn{17}{c}{\scriptsize Severity schedule within each pair: $A=[3,4,5,4,3],\ V=[4,5,4,3,5]$} \\
@@ -283,45 +283,45 @@ BECoTTA
 SuMi
 & 4.50 & 8.50 & 5.50 & 0.00 & 1.00 & 0.50 & 0.50 & 0.00 & 0.00 & 0.00 & 0.50 & 1.00 & 0.50 & 0.00 & 0.00 & \avgcell{1.50} \\
 \midrule
-\rowcolor{zosaBestRow}
-\textbf{ZOSA}
+\rowcolor{szoaBestRow}
+\textbf{SZOA}
 & \textbf{14.00} & \textbf{18.00} & \textbf{13.00} & \textbf{14.00} & \textbf{20.00} & \textbf{29.00} & \textbf{25.00} & \textbf{23.00} & \textbf{15.00} & \textbf{14.00} & \textbf{36.50} & \textbf{27.00} & \textbf{28.50} & \textbf{29.00} & \textbf{25.00} & \textbf{22.07} \\
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
-\begin{table}[t]
-\caption{Average accuracy (\%) across six multimodal corruption protocols. Higher is better. The proposed method achieves the best results in five of the six settings and remains competitive on the remaining one.}
-\label{tab:main_results}
-\centering
-\small
-\begin{tabular}{lcccccc}
-\toprule
-Method & K50-I & VGG-I & K50-E & K50-H & VGG-E & VGG-H \\
-\midrule
-\texttt{no\_adapt} & 63.47 & 45.54 & 47.33 & 44.43 & 13.73 & 12.60 \\
-FOA & 65.36 & \textbf{48.21} & 52.60 & 50.70 & 19.87 & 17.83 \\
-Tent & 63.62 & 45.72 & 46.40 & 42.03 & 9.57 & 8.77 \\
-SAR & 41.59 & 24.85 & 29.27 & 27.53 & 7.20 & 7.17 \\
-READ & 64.10 & 44.98 & 49.50 & 46.73 & 5.47 & 5.17 \\
-ContinualMAE & 63.62 & 45.54 & 47.27 & 44.33 & 13.70 & 12.47 \\
-DeYO & 63.65 & 45.80 & 48.13 & 45.50 & 13.83 & 12.57 \\
-REM & 63.73 & 45.91 & 47.17 & 44.07 & 11.73 & 10.67 \\
-PTA & 63.58 & 43.75 & 46.37 & 35.13 & 5.40 & 4.87 \\
-BECoTTA-MoE & 63.54 & 44.08 & 46.43 & 44.73 & 1.37 & 7.53 \\
-T3A & 49.70 & 17.67 & 32.50 & 29.93 & 4.07 & 3.57 \\
-SuMi & 63.95 & 6.40 & 48.03 & 44.40 & 5.07 & 1.50 \\
-VIDA & 59.67 & 38.73 & 30.75 & 23.75 & 3.00 & 3.50 \\
-\textbf{ZOSA (ours)} & \textbf{66.59} & 47.58 & \textbf{56.83} & \textbf{55.63} & \textbf{23.77} & \textbf{22.07} \\
-\bottomrule
-\end{tabular}
-\end{table}
+% \begin{table}[t]
+% \caption{Average accuracy (\%) across six multimodal corruption protocols. Higher is better. The proposed method achieves the best results in five of the six settings and remains competitive on the remaining one.}
+% \label{tab:main_results}
+% \centering
+% \small
+% \begin{tabular}{lcccccc}
+% \toprule
+% Method & K50-I & VGG-I & K50-E & K50-H & VGG-E & VGG-H \\
+% \midrule
+% \texttt{no\_adapt} & 63.47 & 45.54 & 47.33 & 44.43 & 13.73 & 12.60 \\
+% FOA & 65.36 & \textbf{48.21} & 52.60 & 50.70 & 19.87 & 17.83 \\
+% Tent & 63.62 & 45.72 & 46.40 & 42.03 & 9.57 & 8.77 \\
+% SAR & 41.59 & 24.85 & 29.27 & 27.53 & 7.20 & 7.17 \\
+% READ & 64.10 & 44.98 & 49.50 & 46.73 & 5.47 & 5.17 \\
+% ContinualMAE & 63.62 & 45.54 & 47.27 & 44.33 & 13.70 & 12.47 \\
+% DeYO & 63.65 & 45.80 & 48.13 & 45.50 & 13.83 & 12.57 \\
+% REM & 63.73 & 45.91 & 47.17 & 44.07 & 11.73 & 10.67 \\
+% PTA & 63.58 & 43.75 & 46.37 & 35.13 & 5.40 & 4.87 \\
+% BECoTTA-MoE & 63.54 & 44.08 & 46.43 & 44.73 & 1.37 & 7.53 \\
+% T3A & 49.70 & 17.67 & 32.50 & 29.93 & 4.07 & 3.57 \\
+% SuMi & 63.95 & 6.40 & 48.03 & 44.40 & 5.07 & 1.50 \\
+% VIDA & 59.67 & 38.73 & 30.75 & 23.75 & 3.00 & 3.50 \\
+% \textbf{SZOA (ours)} & \textbf{66.59} & 47.58 & \textbf{56.83} & \textbf{55.63} & \textbf{23.77} & \textbf{22.07} \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
 
 \paragraph{Robustness to synthetic multi-modal domain shifts.}
-Tables~\ref{tab:k50_interleaved} and~\ref{tab:vgg_interleaved} report results on two interleaved single-modality corruption streams, where the audio and video modalities are corrupted alternately while the other modality remains clean, and the severity level is fixed at 5. Each entry denotes the classification accuracy at the corresponding local corruption position, while Avg.\ summarizes the average performance over the full stream. Under this single-sample streaming multimodal setting, existing CTTA methods provide only limited gains. In contrast, ZOSA achieves the best average performance on both benchmarks, reaching $66.59\%$ on Kinetics50-C and $47.58\%$ on VGGSound-C. Compared with the frozen source backbone, ZOSA yields relative improvements of $8.33\%$ and $14.54\%$, respectively. Compared with the strongest existing baseline on each dataset, it further improves by $3.88\%$ and $4.07\%$. These results show that our branch-restricted shift-sensitive layer selection and reliability-calibrated learning signal design effectively stabilize forward-only multimodal online adaptation under interleaved single-modality shifts.
+Tables~\ref{tab:k50_interleaved} and~\ref{tab:vgg_interleaved} report results on two interleaved single-modality corruption streams, where the audio and video modalities are corrupted alternately while the other modality remains clean, and the severity level is fixed at 5. Each entry denotes the classification accuracy at the corresponding local corruption position, while Avg.\ summarizes the average performance over the full stream. Under this single-sample streaming multimodal setting, existing CTTA methods provide only limited gains. In contrast, SZOA achieves the best average performance on both benchmarks, reaching $66.59\%$ on Kinetics50-C and $47.58\%$ on VGGSound-C. Compared with the frozen source backbone, SZOA yields relative improvements of $8.33\%$ and $14.54\%$, respectively. Compared with the strongest existing baseline on each dataset, it further improves by $3.88\%$ and $4.07\%$. These results show that our branch-restricted shift-sensitive layer selection and reliability-calibrated learning signal design effectively stabilize forward-only multimodal online adaptation under interleaved single-modality shifts.
 
-\paragraph{Robustness to dynamic dual-modality domain shifts.} Tables~\ref{tab:k50_hard} and~\ref{tab:vgg_hard} report results under the PairTrack Async Hard protocol, where both audio and video are always corrupted and, within each fixed corruption pair, their severities vary asynchronously over time. The model must therefore remain stable under continuously changing cross-modal perturbation intensity. Existing methods degrade substantially under this protocol, whereas ZOSA still achieves the best average performance, reaching $55.63\%$ on Kinetics50-C and $22.07\%$ on VGGSound-C. Compared with the frozen source backbone, this corresponds to relative improvements of $25.20\%$ and $75.16\%$, respectively. Compared with the strongest baseline FOA, ZOSA further improves by $9.72\%$ on Kinetics50-C and $23.78\%$ on VGGSound-C. These results indicate that when multimodal shifts become stronger and more dynamic, our branch-restricted ZOO updates and reliability-calibrated learning signal can more effectively stabilize forward-only online adaptation.
+\paragraph{Robustness to dynamic dual-modality domain shifts.} Tables~\ref{tab:k50_hard} and~\ref{tab:vgg_hard} report results under the PairTrack Async Hard protocol, where both audio and video are always corrupted and, within each fixed corruption pair, their severities vary asynchronously over time. The model must therefore remain stable under continuously changing cross-modal perturbation intensity. Existing methods degrade substantially under this protocol, whereas SZOA still achieves the best average performance, reaching $55.63\%$ on Kinetics50-C and $22.07\%$ on VGGSound-C. Compared with the frozen source backbone, this corresponds to relative improvements of $25.20\%$ and $75.16\%$, respectively. Compared with the strongest baseline FOA, SZOA further improves by $9.72\%$ on Kinetics50-C and $23.78\%$ on VGGSound-C. These results indicate that when multimodal shifts become stronger and more dynamic, our branch-restricted ZOO updates and reliability-calibrated learning signal can more effectively stabilize forward-only online adaptation.
 
 
 
@@ -329,7 +329,7 @@ Tables~\ref{tab:k50_interleaved} and~\ref{tab:vgg_interleaved} report results on
 \subsection{Ablation Study}
 
 \begin{table}[t]
-\caption{Ablation study under the PairTrack Async Hard protocol. ``RCLS'' denotes Reliability-Calibrated Learning Signal Construction, and ``SSLS'' denotes Shift-Sensitive Layer Selection. A check mark indicates that the corresponding component is enabled. The best performances are highlighted.}
+\caption{Ablation study under the PairTrack Async Hard protocol.}
 \label{tab:ablation}
 \centering
 \small
@@ -352,5 +352,31 @@ The full model achieves the best results, with $55.43\%$ and $22.63\%$ accuracy 
 Removing RCLS leads to relative drops of $3.66\%$ and $4.55\%$, indicating that the reliability-calibrated learning signal reduces the interference of unreliable samples in direction estimation.
 Disabling SSLS and updating all layers reduces performance by $1.91\%$ and $4.86\%$, which confirms that restricting updates to selected shift-sensitive layers helps concentrate the limited forward-query budget on more effective parameters.
 Overall, these results verify the complementary roles of RCLS and SSLS: the former provides more trustworthy sample-level learning signals, while the latter reduces the search space for efficient ZOO adaptation.
+\subsection{Hyperparameter analysis.}
+We analyze the sensitivity of SZOA to three main hyperparameters: the streaming window length $W$, the source-anchored alignment coefficient $\lambda$, and the unreliable-sample suppression coefficient $\gamma$.
+As shown in Fig.~\ref{fig:hyperparameter_sensitivity}, SZOA remains stable across a broad range of hyperparameter choices on both Kinetics50-C and VGGSound-C under the Co-shift Hard setting.
+
+\begin{figure}[t]
+    \centering
+    \begin{minipage}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/effect_streaming_window_W.pdf}\\[-1mm]
+        \small (a) Streaming window length $W$
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/effect_alignment_lambda.pdf}\\[-1mm]
+        \small (b) Alignment coefficient $\lambda$
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.32\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/effect_suppression_gamma.pdf}\\[-1mm]
+        \small (c) Suppression coefficient $\gamma$
+    \end{minipage}
+    \caption{Hyperparameter sensitivity of SZOA under the Co-shift Hard setting. We report the effects of the streaming window length $W$, the source-anchored alignment coefficient $\lambda$, and the unreliable-sample suppression coefficient $\gamma$ on Kinetics50-C and VGGSound-C.}
+    \label{fig:hyperparameter_sensitivity}
+\end{figure}
 
 \subsection{Further Analysis}

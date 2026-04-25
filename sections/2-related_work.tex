@@ -24,7 +24,7 @@ This fundamental dependence limits their practical use on resource-constrained e
 % 然而，现有 ZOO-based CTTA 主要面向单模态设置，尚未充分考虑 MM-CTTA 中的额外不稳定性：
 % 一方面，多模态模型包含多个模态编码器和融合模块，使可搜索参数空间更大且更混杂；
 % 另一方面，模态分布偏移会影响测试样本的可靠性，使单样本流式输入下的有限差分反馈更容易被噪声主导。
-% 本文提出 ZOSA，通过可靠样本与关键参数层筛选降低搜索空间噪声，并通过源锚定统计对齐平滑优化反馈，使 ZOO 能够更稳定地用于端侧 MM-CTTA。
+% 本文提出 SZOA，通过 SSLS 降低搜索空间噪声，并通过 RCLS 校准学习信号，使 ZOO 能够更稳定地用于端侧 MM-CTTA。
 \paragraph{Zeroth-Order Optimization.}
 Zeroth-order optimization (ZOO) does not require explicit gradients and estimates update directions by querying objective values, making it useful when gradients are difficult to compute, unavailable, or too expensive.
 Classical random gradient-free methods construct gradient estimates by perturbing parameters and comparing the corresponding function values.
@@ -33,4 +33,4 @@ Moreover, because ZOO estimates directions from finite differences under random 
 However, existing ZOO-based CTTA mainly targets single-modal settings and has not sufficiently considered the additional instability in MM-CTTA.
 On the one hand, multimodal models contain multiple modality encoders and fusion modules, making the searchable parameter space larger and more entangled.
 On the other hand, modality distribution shifts affect test-sample reliability, making finite-difference feedback under single-sample streaming inputs more likely to be dominated by noise.
-ZOSA addresses these issues by using reliable sample and key parameter-layer selection to reduce search-space noise, and source-anchored statistical alignment to smooth optimization feedback, making ZOO more stable for edge-side MM-CTTA.
+SZOA addresses these issues with SSLS to reduce search-space noise and RCLS to calibrate the learning signal, making ZOO more stable for edge-side MM-CTTA.
